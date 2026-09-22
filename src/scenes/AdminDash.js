@@ -10,6 +10,10 @@ export default class AdminDash extends Scene {
     }
 
     create() {
+        // for local testing, use localhost. For deployed version, use the production api url
+        const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        this.apiBase = isLocal ? "http://localhost:8000" : "https://accounting-game.cse.eng.auburn.edu/api";
+
         this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x550000).setOrigin(0);
 
         this.add.text(this.scale.width / 2, 40, "ADMIN", {
@@ -21,7 +25,7 @@ export default class AdminDash extends Scene {
 
         this.downloadBtn = this.createSmallBtn(this.scale.width - 80, 100, "CSV", () => {
             if (this.currentEndpoint) {
-                window.open(`https://accounting-game.cse.eng.auburn.edu${this.currentEndpoint}/csv`, "_blank");
+                window.open(`${this.apiBase}${this.currentEndpoint}/csv`, "_blank");
             } else {
                 alert("Please select a view first to download data.");
             }
@@ -57,7 +61,7 @@ export default class AdminDash extends Scene {
             
             try {
                 // 1. Fetch the dynamic list of sections from your new API
-                const res = await fetch('https://accounting-game.cse.eng.auburn.edu/api/stats/sections/list');
+                const res = await fetch(`${this.apiBase}/stats/sections/list`);
                 const dynamicSections = await res.json(); // Expected: ["001", "002", "003", "004"...]
 
                 // 2. Build the menu items array
@@ -65,15 +69,15 @@ export default class AdminDash extends Scene {
 
                 // Add the Dynamic Sections first
                 dynamicSections.forEach(secId => {
-                    menuItems.push({ 
-                        label: `Section ${secId}`, 
-                        action: () => this.loadData(`/api/stats/section/${secId}`, `Section ${secId}`, "section") 
+                    menuItems.push({
+                        label: `Section ${secId}`,
+                        action: () => this.loadData(`/stats/section/${secId}`, `Section ${secId}`, "section")
                     });
                 });
 
                 // Add the Static Global Views
-                menuItems.push({ label: "Global Tops", action: () => this.loadData('/api/stats/admin/global-tops', "Global Rankings", "global") });
-                menuItems.push({ label: "All Students", action: () => this.loadData('/api/stats/admin/all-students', "Complete Roster", "all") });
+                menuItems.push({ label: "Global Tops", action: () => this.loadData('/stats/admin/global-tops', "Global Rankings", "global") });
+                menuItems.push({ label: "All Students", action: () => this.loadData('/stats/admin/all-students', "Complete Roster", "all") });
                 
                 // Add the Danger Zone
                 menuItems.push({ label: "Clear All Data", action: () => this.showClearConfirm(), color: "#ff4444" });
@@ -135,8 +139,10 @@ export default class AdminDash extends Scene {
           });
         this.statsContainer.add(closeBtn);
 
+        this.currentEndpoint = endpoint;
+
         try {
-            const response = await fetch(`https://accounting-game.cse.eng.auburn.edu${endpoint}`);
+            const response = await fetch(`${this.apiBase}${endpoint}`);
             const data = await response.json();
 
             const timeLookup = {};
@@ -190,7 +196,7 @@ export default class AdminDash extends Scene {
 
             if (this.downloadBtn) this.downloadBtn.destroy();
             this.downloadBtn = this.createSmallBtn(this.scale.width - 80, 100, "CSV", () => {
-                window.open(`https://accounting-game.cse.eng.auburn.edu${endpoint}/csv`, "_blank");
+                window.open(`${this.apiBase}${endpoint}/csv`, "_blank");
             });
 
         } catch (e) {
@@ -258,7 +264,7 @@ export default class AdminDash extends Scene {
         }
     ).setOrigin(0.5).setDepth(12).setInteractive({ useHandCursor: true })
     .on("pointerdown", () => {
-        window.open("https://accounting-game.cse.eng.auburn.edu/api/stats/admin/all-students/csv", "_blank");
+        window.open(`${this.apiBase}/stats/admin/all-students/csv`, "_blank");
     });
 
     const cancelBtn = this.add.text(

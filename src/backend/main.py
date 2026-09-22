@@ -378,8 +378,10 @@ async def saml_acs(request: Request):
     if not sections:
         sections = None
 
-    # Comma separate sections
-    cs_sections = ",".join(sections) if sections else None
+    # a student can match more than one section group (e.g. cross-listed or
+    # multiple terms) - section names start with "YYYY[F|S]_...", so max()
+    # picks the most recent term instead of concatenating them together
+    cs_sections = max(sections) if sections else None
 
     # save role
 
