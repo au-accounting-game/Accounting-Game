@@ -379,9 +379,16 @@ async def saml_acs(request: Request):
         sections = None
 
     # a student can match more than one section group (e.g. cross-listed or
-    # multiple terms) - section names start with "YYYY[F|S]_...", so max()
-    # picks the most recent term instead of concatenating them together
-    cs_sections = max(sections) if sections else None
+    # multiple terms) - pick the most recent term instead of concatenating
+    # them together. Sort by (year, term) with Spring before Fall within the
+    # same year, since plain string comparison ranks "S" above "F"
+    # alphabetically, which is backwards (Spring precedes Fall each year).
+    def term_sort_key(section_name):
+        year = int(section_name[:4])
+        term_rank = {"S": 0, "F": 1}.get(section_name[4], -1)
+        return (year, term_rank)
+
+    cs_sections = max(sections, key=term_sort_key) if sections else None
 
     # save role
 
