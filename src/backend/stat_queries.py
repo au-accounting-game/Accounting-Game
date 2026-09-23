@@ -8,14 +8,15 @@ from multiprocessing import pool
 
 
 SQL_PROF_STUDENT_STATS = """
-SELECT 
-    p.first_name, 
-    p.last_name, 
-    p.username, 
+SELECT
+    p.first_name,
+    p.last_name,
+    p.username,
     g.game,
     AVG(g.score) as avg_score,
     MAX(g.score) as top_score,
-    MIN(g.score) as bottom_score
+    MIN(g.score) as bottom_score,
+    COUNT(*) as rounds_played
 FROM public.player_profiles p
 JOIN public.game_analytics g ON p.username = g.username
 WHERE p.section = %s

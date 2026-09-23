@@ -1,5 +1,3 @@
-import * as XLSX from "xlsx";
-
 // Class to preload all the assets
 export class Preloader extends Phaser.Scene {
     constructor() {
@@ -128,38 +126,9 @@ export class Preloader extends Phaser.Scene {
         };
         this.cache.bitmapFont.add("knighthawks", Phaser.GameObjects.RetroFont.Parse(this, config));
 
-        // --- Parse Excel ---
-        const data = this.cache.binary.get("excelData");
-        if (data) {
-            const workbook = XLSX.read(data, { type: "array" });
-
-            // Phase 1: Easy
-            const sheet1 = workbook.Sheets["A=L+SE - Easy"];
-            const range1 = XLSX.utils.sheet_to_json(sheet1, { header: 1, range: "F4:F23" });
-            const phase1Questions = range1.map(row => row[0]).filter(Boolean);
-
-            // Phase 2: Medium
-            const sheet2 = workbook.Sheets["A=L+SE - Medium"];
-            const range2 = XLSX.utils.sheet_to_json(sheet2, { header: 1, range: "F4:F23" });
-            const phase2Questions = range2.map(row => row[0]).filter(Boolean);
-
-            // Phase 3: Hard
-            const sheet3 = workbook.Sheets["A=L+SE - Hard"];
-            const range3 = XLSX.utils.sheet_to_json(sheet3, { header: 1, range: "F4:F23" });
-            const phase3Questions = range3.map(row => row[0]).filter(Boolean);
-
-            // Store globally
-            this.game.questionData = {
-                phase1: phase1Questions,
-                phase2: phase2Questions,
-                phase3: phase3Questions,
-            };
-
-            console.log("Loaded Equation Mode Questions:", this.game.questionData);
-        } else {
-            console.warn("Excel file not found in cache!");
-            this.game.questionData = { phase1: [], phase2: [], phase3: [] };
-        }
+        // Note: the "excelData" binary loaded above is parsed independently
+        // by each of GM3Level1/2/3 in their own buildLevel() (each level
+        // uses a different sheet/column layout), not here.
 
         // --- Transition to Splash ---
         this.scene.start("SplashScene");
