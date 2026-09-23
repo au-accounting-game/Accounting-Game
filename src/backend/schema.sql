@@ -79,8 +79,20 @@ CREATE TABLE IF NOT EXISTS public.game_analytics (
 -- Index for faster leaderboard queries
 CREATE INDEX IF NOT EXISTS idx_game_analytics_game_score ON public.game_analytics(game, score DESC);
 
--- PERMISSIONS & GRANTS 
--- updated for the new table set ups 
+-- Tracks which Accounting Equation (GM3) questions a student has already
+-- been shown, per difficulty bank, so replays bias toward fresh questions
+-- instead of cycling the same handful within the time limit.
+CREATE TABLE IF NOT EXISTS public.gm3_question_history (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) REFERENCES public.player_profiles(username),
+    bank VARCHAR(20) NOT NULL CHECK (bank IN ('easy', 'medium', 'hard')),
+    question TEXT NOT NULL,
+    seen_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (username, bank, question)
+);
+
+-- PERMISSIONS & GRANTS
+-- updated for the new table set ups
 
 GRANT CONNECT ON DATABASE leaderboard TO game_app;
 GRANT USAGE ON SCHEMA public TO game_app;
@@ -93,6 +105,8 @@ GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.scores_id_seq TO game_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE player_profiles TO game_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE game_analytics TO game_app;
 GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.game_analytics_id_seq TO game_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE gm3_question_history TO game_app;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.gm3_question_history_id_seq TO game_app;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO game_app;

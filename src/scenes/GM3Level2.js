@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import BaseGM3Scene from "./BaseGM3Scene";
+import { orderByRecency, markSeen } from "../gameobjects/QuestionHistory";
 
 export default class GM3Level2 extends BaseGM3Scene {
   constructor() {
@@ -13,23 +14,25 @@ export default class GM3Level2 extends BaseGM3Scene {
     this.score = 0; // show as POINTS: 0000
   }
 
-  preload() {
-    this.load.binary("gm3_medium_xlsx", "assets/UpdatedAccountingElements_v2.26.xlsx");
-    this.load.image("gm3_level1_bg", "assets/level1.jpg"); // same background as Level 1
-  }
-
   onTimeUp() { this._finishToGameOver("timeup"); }
 
   _finishToGameOver(reason = "completed") {
     if (this.timerEvent) this.timerEvent.remove(false);
+
+    // record which questions were actually shown this playthrough, so a
+    // replay biases toward fresh ones instead of cycling the same handful
+    if (this.apiBase && this.questions.length) {
+      markSeen(this.apiBase, "medium", this.questions.slice(0, this.currentIndex + 1));
+    }
+
     this.scene.start("GameOverScene", { score: this.score, mode: "GM3-Level2", reason,
       timeSpentPlaying: Math.floor((this.time.now - this.startTime) / 1000),
      });
   }
 
-  buildLevel() {
+  async buildLevel() {
     this.sound.play("game3", { loop: true, volume: this.game.sfxVolume ?? 1 });
-    const buf = this.cache.binary.get("gm3_medium_xlsx");
+    const buf = this.cache.binary.get("excelData");
     if (!buf) return this._failAndBack("Excel file not found.");
 
     try {
@@ -72,8 +75,9 @@ export default class GM3Level2 extends BaseGM3Scene {
 
       if (!rows.length) return this._failAndBack("No valid questions found in the sheet.");
 
-      Phaser.Utils.Array.Shuffle(rows);
-      this.questions = rows; // all questions; single pass => no repeats
+      const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      this.apiBase = isLocal ? "http://localhost:8000" : "https://accounting-game.cse.eng.auburn.edu/api";
+      this.questions = await orderByRecency(rows, this.apiBase, "medium");
     } catch (e) {
       console.error("GM3Level2 excel parse error:", e);
       return this._failAndBack("Unable to read questions from the sheet.");

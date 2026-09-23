@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import BaseGM3Scene from "./BaseGM3Scene";
+import { orderByRecency, markSeen } from "../gameobjects/QuestionHistory";
 
 export default class GM3Level1 extends BaseGM3Scene {
   constructor() {
@@ -18,30 +19,31 @@ export default class GM3Level1 extends BaseGM3Scene {
     this.score = 0; // start score at 0 -> shows as POINTS: 0000
   }
 
-  //preload version for local 
-  //preload() {
-  //  this.load.binary("gm3_easy_xlsx", "/assets/UpdatedAccountingElements_v2.26.xlsx");
-  //  this.load.image("gm3_level1_bg", "/assets/level1.jpg");
-  //}
-
   onTimeUp() { this._finishToGameOver("timeup"); }
 
   _finishToGameOver(reason = "completed") {
     if (this.timerEvent) this.timerEvent.remove(false);
-    
+
     // unbind
-    this.input.keyboard.off('keydown', this._handleKeydown, this); 
+    this.input.keyboard.off('keydown', this._handleKeydown, this);
+
+    // record which questions were actually shown this playthrough, so a
+    // replay biases toward fresh ones instead of cycling the same handful
+    if (this.apiBase && this.questions.length) {
+      markSeen(this.apiBase, "easy", this.questions.slice(0, this.currentIndex + 1));
+    }
+
     const startTime = this.registry.get('levelStartTime') || Date.now();
     const timeSpentPlaying = Math.floor((Date.now() - startTime) / 1000);
-    this.scene.start("GameOverScene", { 
-        score: this.score, 
-        mode: "GM3-Level1", 
+    this.scene.start("GameOverScene", {
+        score: this.score,
+        mode: "GM3-Level1",
         reason,
         timeSpentPlaying: Math.floor((this.time.now - this.startTime) / 1000),
     });
   }
 
-  buildLevel() {
+  async buildLevel() {
     // -------------------------------------------------------------------------
     // 1. Audio and Excel File Loading
     // -------------------------------------------------------------------------
@@ -98,8 +100,9 @@ export default class GM3Level1 extends BaseGM3Scene {
 
     if (!rows.length) return this._failAndBack("No valid questions found. Check Col F (Question) and Col K (Answer).");
 
-    Phaser.Utils.Array.Shuffle(rows);
-    this.questions = rows; 
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    this.apiBase = isLocal ? "http://localhost:8000" : "https://accounting-game.cse.eng.auburn.edu/api";
+    this.questions = await orderByRecency(rows, this.apiBase, "easy");
 
     // -------------------------------------------------------------------------
     // 3. Scene Setup (Background & HUD)
@@ -454,14 +457,4 @@ export default class GM3Level1 extends BaseGM3Scene {
   }
 
   _getCellText(c) { if (!c) return ""; const v = typeof c.w === "string" ? c.w : c.v; return (v ?? "").toString().trim(); }
-  _fromKCell(k) { const r = this._getCellText(k).toUpperCase(); if (!r) return -1; return { G:0,H:1,I:2,J:3,"1":0,"2":1,"3":2,"4":3 }[r[0]] ?? -1; }
-  _cellIsGood(c) {
-    if (!c) return false;
-    const rgb = c?.s?.fill?.fgColor?.rgb || c?.s?.fill?.bgColor?.rgb;
-    const goods = ["FFC6EFCE","FF92D050","FF00B050","FF00FF00"];
-    if (rgb && goods.includes(rgb.toUpperCase())) return true;
-    if (typeof c.h === "string" && c.h.toLowerCase().includes("c6efce")) return true;
-    return false;
-  }
-  _detectGoodGreen(cells) { let f=-1; for(let i=0;i<cells.length;i++) if(this._cellIsGood(cells[i])) { if(f!==-1) return -1; f=i; } return f; }
 }

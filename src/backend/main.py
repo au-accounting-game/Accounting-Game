@@ -273,6 +273,63 @@ def preview_rank(game: str, score: int, n: int = TOP_N):
     if game not in ALLOWED_GAMES:
         raise
 
+# GM3 (Accounting Equation) question history -------------------------------------------------------------------------
+
+GM3_BANKS = {"easy", "medium", "hard"}
+
+class SeenQuestionsPayload(BaseModel):
+    bank: str
+    questions: List[str]
+
+@app.get("/gm3/seen-questions", summary="Get previously-seen GM3 questions for the logged-in student")
+def get_seen_questions(bank: str, request: Request):
+    username = request.session.get('userid')
+    if not username:
+        # no session (e.g. local dev without SSO) - nothing to report, treat everything as unseen
+        return []
+    if bank not in GM3_BANKS:
+        raise HTTPException(status_code=400, detail="Invalid bank")
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB not initialized")
+
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT question FROM public.gm3_question_history WHERE username = %s AND bank = %s",
+                (username, bank)
+            )
+            rows = cur.fetchall()
+        return [r[0] for r in rows]
+    finally:
+        pool.putconn(conn)
+
+@app.post("/gm3/seen-questions", summary="Mark GM3 questions as seen for the logged-in student")
+def mark_seen_questions(payload: SeenQuestionsPayload, request: Request):
+    username = request.session.get('userid')
+    if not username:
+        # no session - nothing to persist, fail quietly rather than error out the player
+        return {"status": "skipped", "reason": "no session"}
+    if payload.bank not in GM3_BANKS:
+        raise HTTPException(status_code=400, detail="Invalid bank")
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB not initialized")
+
+    conn = pool.getconn()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                for q in payload.questions:
+                    cur.execute(
+                        """INSERT INTO public.gm3_question_history (username, bank, question)
+                           VALUES (%s, %s, %s)
+                           ON CONFLICT (username, bank, question) DO UPDATE SET seen_at = NOW()""",
+                        (username, payload.bank, q)
+                    )
+        return {"status": "success", "count": len(payload.questions)}
+    finally:
+        pool.putconn(conn)
+
 # SAML ---------------------------------------------------------------------------------------------------------------
 
 
@@ -554,11 +611,12 @@ def get_section_report(section_id: str):
                 "student_breakdown": [
                     {
                         "name": f"{r[0]} {r[1]}", # Combines real First and Last name
-                        "user": r[2], 
+                        "user": r[2],
                         "game": r[3],             # This ensures Phaser knows WHICH game the score is for
-                        "avg": float(r[4]) if r[4] is not None else 0.0, 
-                        "top": r[5], 
-                        "bottom": r[6]
+                        "avg": float(r[4]) if r[4] is not None else 0.0,
+                        "top": r[5],
+                        "bottom": r[6],
+                        "rounds": r[7]
                     } for r in student_stats
                 ],
                 "section_game_averages": [
@@ -669,7 +727,7 @@ def get_all_students_admin():
             # We reuse the Prof query but pass None or a wildcard if your SQL supports it, 
             # OR we use a dedicated "Global" version of that query:
             cur.execute("""
-                SELECT p.first_name, p.last_name, p.username, g.game, AVG(g.score), MAX(g.score), MIN(g.score), p.section, SUM(g.time_played) as total_time
+                SELECT p.first_name, p.last_name, p.username, g.game, AVG(g.score), MAX(g.score), MIN(g.score), p.section, SUM(g.time_played) as total_time, COUNT(*) as rounds_played
                 FROM public.player_profiles p
                 JOIN public.game_analytics g ON p.username = g.username
                 GROUP BY p.first_name, p.last_name, p.username, g.game, p.section
@@ -678,13 +736,14 @@ def get_all_students_admin():
             rows = cur.fetchall()
             return [
                 {
-                    "name": f"{r[0]} {r[1]}", 
-                    "game": r[3], 
-                    "avg": float(r[4]), 
-                    "top": r[5], 
+                    "name": f"{r[0]} {r[1]}",
+                    "game": r[3],
+                    "avg": float(r[4]),
+                    "top": r[5],
                     "bottom": r[6],
                     "section": r[7],
-                    "total_time": int(r[8]) if r[8] is not None else 0
+                    "total_time": int(r[8]) if r[8] is not None else 0,
+                    "rounds": r[9]
                 } for r in rows
             ]
     finally:

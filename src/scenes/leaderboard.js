@@ -173,12 +173,24 @@ export class Leaderboard extends Scene {
 
         // Dashboard Arrow
 
-        const response = await fetch("https://accounting-game.cse.eng.auburn.edu/api/fetch-user");
-        const userRole = await response.json().then(data => data.role);
+        // for local testing, use localhost. For deployed version, use the production api url
+        const isLocalDash = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        const dashApiBase = isLocalDash ? "http://localhost:8000" : "https://accounting-game.cse.eng.auburn.edu/api";
+
+        let userRole = null;
+        try {
+            const response = await fetch(`${dashApiBase}/fetch-user`);
+            userRole = await response.json().then(data => data.role);
+        } catch (err) {
+            // don't let a failed fetch here (e.g. no local session, network
+            // issue) block the rest of scene setup below - just skip the
+            // dashboard arrow
+            console.error("Failed to fetch user role for dashboard arrow", err);
+        }
 
         console.log("User role fetched from server:", userRole);
 
-        // check type of user (admin, professor, other)        
+        // check type of user (admin, professor, other)
         let dashTarget = userRole === "admin" ? "AdminDash" :
                            userRole === "professor" ? "ProfessorDash" :
                            null;
