@@ -12,7 +12,7 @@ export class Basket extends GameObjects.Container {
         this.basketImage.displayHeight = 90;
 
         this.textLabel = new GameObjects.Text(scene, 0, 0, type, {
-            fontSize: "10px",
+            fontSize: "18px",
             fill: "#ffffff",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
             padding: { x: 2, y: 2 },
