@@ -408,15 +408,24 @@ export class MainScene extends Scene {
     checkForBall(ball, basket) {
         if (ball.state !== "picked" && ball.pit_number == null) {
             if (ball.type === basket.type) {
+                // Increase the streak before calculating points
+                this.streak += 1;
+
+                // Start the multiplier at 1.3x on the third correct sort
+                const multiplier = this.streak >= 3
+                    ? 1 + this.streak * 0.1
+                    : 1;
+
                 const ballPoints = ball.points ?? 100;
-                const awardedPoints = ball.been_in_wrong_basket
+                const basePoints = ball.been_in_wrong_basket
                     ? ballPoints / 2
                     : ballPoints;
 
+                const awardedPoints = Math.round(basePoints * multiplier);
+
                 this.points += awardedPoints;
-		// update streak
-		this.streak += 1;
-		this.updateStreakUI();
+                this.updateStreakUI();
+
 		// animation
 		if (this.streak < 7) {
     		    this.tweens.killTweensOf(this.streakText);
@@ -471,7 +480,13 @@ export class MainScene extends Scene {
 	//appears after 3 consecutive correct sorts
         if (this.streak >= 3) {
             this.streakText.setVisible(true);
-            this.streakText.setText(`Streak: ${this.streak}`);
+            
+            // Calculate multiplier based on streak
+            const multiplier = 1 + this.streak * 0.1;
+
+            this.streakText.setText(
+                `Streak: ${this.streak} | ${multiplier.toFixed(1)}×`
+            );
         } 
 	else {
             this.streakText.setVisible(false);
