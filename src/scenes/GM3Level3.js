@@ -281,6 +281,11 @@ export default class GM3Level3 extends BaseGM3Scene {
 
         // Canonical order for cycling and display
         const cycleValues = ["NE", "U", "O"];
+        const displayLabels = {
+            O: "Overstated",
+            U: "Understated",
+            NE: "No Effect"
+        };
         const nextOf = (cur) => {
             const i = cycleValues.indexOf(cur);
             return cycleValues[(i + 1) % cycleValues.length];
@@ -301,9 +306,9 @@ export default class GM3Level3 extends BaseGM3Scene {
             container.add(rect);
 
             const valueText = this.add
-                .text(0, 0, this.selections[key], {
+                .text(0, 0, displayLabels[this.selections[key]], {
                     fontFamily: '"Jersey 10", sans-serif',
-                    fontSize: "30px",
+                    fontSize: "20px",
                     color: "#7f1a02",
                     align: "center",
                 })
@@ -343,7 +348,7 @@ export default class GM3Level3 extends BaseGM3Scene {
 
             const setValue = (val) => {
                 this.selections[key] = val;
-                valueText.setText(val);
+                valueText.setText(displayLabels[val]);
                 this.sound?.play?.("ui_click");
             };
 
@@ -454,7 +459,7 @@ export default class GM3Level3 extends BaseGM3Scene {
         card.add(g);
 
         const message =
-            "What is the effect on the financial statement elements?\nClick on up and down arrows or element boxes to indicate change (O=overstated, U=understated, NE=no effect).";
+            "What is the effect on the financial statement elements?\nClick on up and down arrows or element boxes to select Overstated, Understated, or No Effect.";
         const title = this.add
             .text(0, -40, message, {
                 fontSize: "34px",
@@ -547,7 +552,7 @@ export default class GM3Level3 extends BaseGM3Scene {
 
         this.selections = { Asset: "NE", Liability: "NE", SE: "NE", NI: "NE" };
         this.selectors.forEach((s) =>
-            s.valueText.setText(this.selections[s.key])
+            s.valueText.setText("No Effect")
         );
 
         if (show) this._setGameplayUIVisible(true);
