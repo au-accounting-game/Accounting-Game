@@ -450,7 +450,12 @@ export class MainScene extends Scene {
 
                 ball.destroyBall();
                 this.answer_stats.get(basket.type).correct += 1;
+                
+// Increase the correct-answer counter
+this.correctAnswers += 1;
 
+// Update the counter displayed on screen
+this.scene.get("HudScene").update_correct_answers(this.correctAnswers);
                 if (this.game.sfxVolume > 0) {
                     this.sound.play("correct", { volume: this.game.sfxVolume });
                 }
