@@ -11,7 +11,14 @@ export class Basket extends GameObjects.Container {
         this.basketImage.displayWidth = 90;
         this.basketImage.displayHeight = 90;
 
-        this.textLabel = new GameObjects.Text(scene, 0, 0, type, {
+        let displayLabel = type;
+
+if (type === "Expenses/Losses") {
+    displayLabel = "Expenses /\nLosses";
+} else if (type === "Revenues/Gains") {
+    displayLabel = "Revenues /\nGains";
+}
+        this.textLabel = new GameObjects.Text(scene, 0, 0, displayLabel, {
             fontSize: "18px",
             fill: "#ffffff",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
