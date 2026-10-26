@@ -14,7 +14,7 @@ export class Basket extends GameObjects.Container {
         let displayLabel = type;
 
 if (type === "Expenses/Losses") {
-    displayLabel = "Expenses /\nLosses";
+    displayLabel = "Expenses\n/Losses";
 } else if (type === "Revenues/Gains") {
     displayLabel = "Revenues /\nGains";
 }
