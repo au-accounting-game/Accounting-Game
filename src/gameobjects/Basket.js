@@ -15,9 +15,9 @@ export class Basket extends GameObjects.Container {
             fontSize: "18px",
             fill: "#ffffff",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
-            padding: { x: 2, y: 2 },
+            padding: { x: 5, y: 3 },
             align: "center",
-            wordWrap: { width: 100, useAdvancedWrap: true },
+            wordWrap: { width: 200, useAdvancedWrap: true },
         });
         this.textLabel.setOrigin(0.5, 0.5);
 
