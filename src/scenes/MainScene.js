@@ -220,6 +220,7 @@ export class MainScene extends Scene {
         this.game.sfxVolume = parseFloat(localStorage.getItem("volume"));
         if (isNaN(this.game.sfxVolume)) this.game.sfxVolume = 1.0;
         this.ballCount = 0;
+        this.correctAnswers = 0;
 	this.streak = 0; // STREAK COUNTER
         this.cameras.main.fadeIn(1000, 0, 0, 0);
 
