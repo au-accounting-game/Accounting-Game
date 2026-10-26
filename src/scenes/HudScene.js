@@ -36,6 +36,13 @@ export class HudScene extends Scene {
             .setStroke(strokeColor, strokeThickness)
             .setDepth(999);
 
+        // --- Correct answers counter (below points) ---
+this.correct_answers_text = this.add
+    .text(20, 45, "Correct: 0/20", baseStyle)
+    .setOrigin(0, 0)
+    .setStroke(strokeColor, strokeThickness)
+    .setDepth(999);
+
         // --- Time text (top-right) ---
         this.remaining_time_text = this.add
             .text(width - 20, 3, `Time: ${this.remaining_time}s`, baseStyle)
@@ -62,6 +69,9 @@ export class HudScene extends Scene {
         this.points_text?.setText(`POINTS: ${v}`);
     }
 
+    update_correct_answers(count) {
+    this.correct_answers_text?.setText(`Correct: ${count}/20`);
+}
     update_timeout(timeout) {
         const t = timeout | 0;
         this.remaining_time_text?.setText(`Time: ${t}s`);
