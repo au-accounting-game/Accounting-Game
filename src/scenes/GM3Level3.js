@@ -735,7 +735,7 @@ export default class GM3Level3 extends BaseGM3Scene {
             })
             .setOrigin(0.5)
             .setDepth(20);
-        this.time.delayedCall(2200, () => this.scene.start("GM3LevelSelect"));
+        this.time.delayedCall(2200, () => this.scene.start("MainMenuScene"));
     }
 
     _getCellText(c) {

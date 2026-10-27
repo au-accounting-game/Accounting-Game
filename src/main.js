@@ -15,8 +15,7 @@ import MusicManager from "./gameobjects/MusicManager";
 // Added: speed selection for GM 1 and 2
 import { SpeedSelect } from "./scenes/SpeedSelect";
 
-// NEW: GameMode 3 (level select + 3 levels)
-import GM3LevelSelect from "./scenes/GM3LevelSelect";
+// NEW: GameMode 3 (3 levels)
 import GM3Level1 from "./scenes/GM3Level1";
 import GM3Level2 from "./scenes/GM3Level2";
 import GM3Level3 from "./scenes/GM3Level3";
@@ -69,7 +68,7 @@ const config = {
     SettingsScene,
     // Removed: EquationScene,
     // New third gamemode scenes:
-    GM3LevelSelect,
+    // Removed: GM3LevelSelect,
     GM3Level1,
     GM3Level2,
     GM3Level3,
