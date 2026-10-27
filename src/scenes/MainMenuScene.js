@@ -76,30 +76,28 @@ export class MainMenuScene extends Scene {
     else setMusic();
 
     // --- Menu Buttons ---
-    const options = ["debit_credit", "accounting", "gamemode3"];
-    const selectedOptions = { type: "debit_credit" };
-
-    const get_option_text = (option) => {
-      if (option === "debit_credit") return "Debit vs Credit";
-      if (option === "accounting") return "The Five Elements";
-      if (option === "gamemode3") return "Accounting Equation";
-      return option;
-    };
+    const options = [
+      { label: "Effect of Transactions", scene: "GM3Level2" },
+      { label: "Balance the Accounting Equation", scene: "GM3Level1" },
+      { label: "Debit/Credit", type: "debit_credit" },
+      { label: "5 Elements", type: "accounting" },
+      { label: "Accounting Errors", scene: "GM3Level3" },
+    ];
 
     const createButton = (x, y, labelText, onClick) => {
       // visual body of the button
-      const border = this.add.rectangle(0, 0, 304, 64, 0x7f1a02).setDepth(3);
+      const border = this.add.rectangle(0, 0, 464, 54, 0x7f1a02).setDepth(3);
       border.setStrokeStyle(3, 0xdcc89f);
 
       // button hitbox
-      const rect = this.add.rectangle(0, 0, 300, 60, 0x7f1a02).setDepth(3);
+      const rect = this.add.rectangle(0, 0, 460, 50, 0x7f1a02).setDepth(3);
 
       // label: text on top of button
       const label = this.add.text(0, 0, labelText, {
         fontSize: "128px",
         fontFamily: '"Jersey 10", sans-serif',
         color: "#dcc89f",
-      }).setOrigin(0.5).setDepth(3).setScale(0.27);
+      }).setOrigin(0.5).setDepth(3).setScale(0.23);
 
       const button = this.add.container(x, y, [border, rect, label]).setDepth(3);
 
@@ -130,7 +128,7 @@ export class MainMenuScene extends Scene {
     const totalButtons = options.length;
 
     // controls menu spacing and placement
-    const spacing = 85;
+    const spacing = 65;
     const blockHeight = (totalButtons - 1) * spacing;
     const startY = height / 2 - blockHeight / 2 + 50;
 
@@ -138,21 +136,14 @@ export class MainMenuScene extends Scene {
       createButton(
         width / 2,
         startY + index * spacing,
-        get_option_text(option),
+        option.label,
         () => {
-          selectedOptions.type = option;
+          this.game.musicManager?.stop();
 
-          // IMPORTANT:
-          // - For gamemode3 (GM3LevelSelect), DO NOT stop the menu music (carry it over).
-          // - For other modes, stop so their scenes can run their own music.
-          if (option !== "gamemode3") {
-            this.game.musicManager?.stop();
-          }
-
-          if (option === "gamemode3") {
-            this.startGameMode3(); // transitions to GM3LevelSelect with music still playing
+          if (option.scene) {
+            this.startGameMode3(option.scene);
           } else {
-            this.startGame(selectedOptions);
+            this.startGame(option);
           }
         }
       );
@@ -329,11 +320,11 @@ export class MainMenuScene extends Scene {
     });
   }
 
-  startGameMode3() {
+  startGameMode3(sceneKey) {
     this.cameras.main.fadeOut(500, 0, 0, 0);
+
     this.cameras.main.once("camerafadeoutcomplete", () => {
-      // NOTE: do NOT stop music here; it continues into GM3LevelSelect
-      this.scene.start("GM3LevelSelect");
+      this.scene.start(sceneKey);
     });
   }
 

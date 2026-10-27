@@ -453,7 +453,7 @@ export default class GM3Level1 extends BaseGM3Scene {
     this.add.text(width / 2, height / 2, msg, {
       fontSize: "18px", color: "#ffffff", align: "center", wordWrap: { width: width * 0.9 },
     }).setOrigin(0.5).setDepth(20);
-    this.time.delayedCall(2200, () => this.scene.start("GM3LevelSelect"));
+    this.time.delayedCall(2200, () => this.scene.start("MainMenuScene"));
   }
 
   _getCellText(c) { if (!c) return ""; const v = typeof c.w === "string" ? c.w : c.v; return (v ?? "").toString().trim(); }

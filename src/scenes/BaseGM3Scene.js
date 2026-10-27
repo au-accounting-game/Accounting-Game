@@ -97,7 +97,7 @@ export default class BaseGM3Scene extends Phaser.Scene {
       this.timerEvent.remove(false);
       this.timerEvent = null;
     }
-    this.scene.start("GM3LevelSelect", {
+    this.scene.start("MainMenuScene", {
       lastResult: { level: this.level, score: this.score, success },
     });
   }
