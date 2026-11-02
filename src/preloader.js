@@ -131,6 +131,6 @@ export class Preloader extends Phaser.Scene {
         // uses a different sheet/column layout), not here.
 
         // --- Transition to Splash ---
-        this.scene.start("SplashScene");
+        this.scene.start("MainMenuScene");
     }
 }
