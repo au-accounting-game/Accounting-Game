@@ -294,11 +294,12 @@ export class GameOverScene extends Scene {
       if (!res.ok) throw new Error("Network response was not ok");
       
       this.time.delayedCall(1500, () => {
-        this.scene.start("Leaderboard", {
-          gameKey: this.gameKey,
-          highlightName: savedUsername.substring(0, 3).toUpperCase(), 
-        });
-      });
+    this.scene.start("Leaderboard", {
+        gameKey: this.gameKey,
+        highlightName: savedUsername.substring(0, 3).toUpperCase(),
+        playAgainScene: this._resolveRestartScene(),
+    });
+});
 
     } catch (err) {
       console.error("Auto-submit failed:", err);
@@ -389,12 +390,13 @@ export class GameOverScene extends Scene {
 
         this._resumeKeys();
 
-        this.time.delayedCall(900, () => {
-          this.scene.start("Leaderboard", {
-            gameKey: this.gameKey,
-            highlightName: username,
-          });
-        });
+      this.time.delayedCall(900, () => {
+    this.scene.start("Leaderboard", {
+        gameKey: this.gameKey,
+        highlightName: username,
+        playAgainScene: this._resolveRestartScene(),
+    });
+});
       } catch (err) {
         console.error("Error submitting score:", err);
         const message = err.message;
