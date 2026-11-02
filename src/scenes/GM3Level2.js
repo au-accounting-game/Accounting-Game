@@ -168,7 +168,7 @@ export default class GM3Level2 extends BaseGM3Scene {
     const lblNI   = this.add.text(pipe.x + 22, EQ_Y, "Net Income", labelStyle).setOrigin(0, 0.5).setDepth(6);
 
     // Selector geometry
-    const boxW = 120, boxH = 52;
+    const boxW = 150, boxH = 52;
     const assetCenter = lblAsset.x + lblAsset.width / 2;
     const liabCenter  = lblLiab.x + lblLiab.width / 2;
     const seCenter    = lblSE.x + lblSE.width / 2;
@@ -183,6 +183,11 @@ export default class GM3Level2 extends BaseGM3Scene {
     };
     // Cycle order with "No Effect"
     const cycleValues = ["No Effect", "+", "-"];
+const displayValues = {
+    "No Effect": "No Effect",
+    "+": "Increase",
+    "-": "Decrease"
+};
 
     const makeSelector = (centerX, key) => {
       const container = this.add.container(centerX, selY).setDepth(6);
@@ -191,7 +196,7 @@ export default class GM3Level2 extends BaseGM3Scene {
         .setInteractive({ useHandCursor: true });
       container.add(rect);
 
-      const valueText = this.add.text(0, 0, this.selections[key], {
+     const valueText = this.add.text(0, 0, displayValues[this.selections[key]], {
         fontFamily: '"Jersey 10", sans-serif',
         fontSize: "30px",
         color: "#7f1a02",
@@ -225,15 +230,14 @@ export default class GM3Level2 extends BaseGM3Scene {
         const cur = this.selections[key];
         const idx = cycleValues.indexOf(cur);
         const next = cycleValues[(idx + 1) % cycleValues.length];
-        this.selections[key] = next; valueText.setText(next);
-        this.sound?.play?.("ui_click");
+this.selections[key] = next; valueText.setText(displayValues[next]);        this.sound?.play?.("ui_click");
       };
       const cycleBackward = () => {
         const cur = this.selections[key];
         const idx = cycleValues.indexOf(cur);
         const next = cycleValues[(idx - 1 + cycleValues.length) % cycleValues.length];
-        this.selections[key] = next; valueText.setText(next);
-        this.sound?.play?.("ui_click");
+this.selections[key] = next; valueText.setText(displayValues[next]);
+          this.sound?.play?.("ui_click");
       };
 
       rect.on("pointerover", () => rect.setFillStyle(0xefdcbc));
@@ -392,8 +396,11 @@ export default class GM3Level2 extends BaseGM3Scene {
 
     // Reset selectors to "No Effect" each question
     this.selections = { Asset: "No Effect", Liability: "No Effect", SE: "No Effect", NI: "No Effect" };
-    this.selectors.forEach(s => s.valueText.setText(this.selections[s.key]));
-
+this.selectors.forEach(s => s.valueText.setText(
+    this.selections[s.key] === "+" ? "Increase" :
+    this.selections[s.key] === "-" ? "Decrease" :
+    "No Effect"
+));
     if (show) this._setGameplayUIVisible(true);
   }
 
