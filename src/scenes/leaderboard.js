@@ -167,9 +167,28 @@ export class Leaderboard extends Scene {
 
 
         // Exit button
-        const exitBtn = createButton(-panelWidth / 2 + 72.5, -panelHeight / 2 + 35, "Exit", () => this.scene.start("MainMenuScene"));
-        this.leaderboardContainer.add(exitBtn);
+const exitBtn = createButton(
+    -panelWidth / 2 + 72.5,
+    -panelHeight / 2 + 35,
+    "Exit",
+    () => this.scene.start("MainMenuScene")
+);
+this.leaderboardContainer.add(exitBtn);
 
+// Play Again button directly below Exit
+if (this.playAgainScene) {
+    const playAgainBtn = createButton(
+        -panelWidth / 2 + 72.5,
+        -panelHeight / 2 + 95,
+        "Play Again",
+        () => {
+            this.game.musicManager?.stop();
+            this.sound.stopAll();
+            this.scene.start(this.playAgainScene);
+        }
+    );
+    this.leaderboardContainer.add(playAgainBtn);
+}
 
         // Dashboard Arrow
 
