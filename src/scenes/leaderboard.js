@@ -9,6 +9,7 @@ export class Leaderboard extends Scene {
         this.gameKey = data.gameKey || "game1";
         this.highlightName = data.highlightName || null; 
         this.scoreScope = "section"; // tab state
+        this.playAgainScene = data.playAgainScene || null;
     }
 
     async create() {
