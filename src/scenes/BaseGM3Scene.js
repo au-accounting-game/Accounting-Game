@@ -19,6 +19,8 @@ export default class BaseGM3Scene extends Phaser.Scene {
 
   init() {
     this.score = 0;
+    this.correctAnswers = 0;
+    this.totalAttempts = 0;
     this.timeLeft = this.timeLimit;
     if (this.input) this.input.enabled = true;
 
@@ -59,7 +61,12 @@ export default class BaseGM3Scene extends Phaser.Scene {
     this.timerText = this.add
       .text(width - 16, 20, `Time: ${this.timeLeft}`, { fontSize: "18px", color: "#ffffff" })
       .setOrigin(1, 0);
-
+// Correct answers / Total attempts
+this.questionCounterText = this.add.text(16, 48, "0/0", {
+    fontSize: "18px",
+    color: "#ffffff"
+});
+      
     // Start timer
     this._startTimer();
 
@@ -87,7 +94,18 @@ export default class BaseGM3Scene extends Phaser.Scene {
     this.score += points;
     if (this.scoreText) this.scoreText.setText(`Score: ${this.score}`);
   }
+recordAnswer(isCorrect) {
+    this.totalAttempts += 1;
 
+    if (isCorrect) {
+        this.correctAnswers += 1;
+    }
+
+    this.questionCounterText?.setText(
+        `${this.correctAnswers}/${this.totalAttempts}`
+    );
+}
+    
   onTimeUp() {
     this.endLevel(false);
   }
