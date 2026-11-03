@@ -601,7 +601,7 @@ this.recordAnswer(allMatch);
             this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
         this.input.enabled = false;
-        this.time.delayedCall(650, () => {
+        this.time.delayedCall(1400, () => {
             this.currentIndex++;
             this._showCurrent(true);
             this.input.enabled = true;
@@ -616,7 +616,7 @@ this.recordAnswer(allMatch);
         this.tweens.add({
             targets: overlay,
             alpha: maxAlpha,
-            duration: 120,
+            duration: 700,
             yoyo: true,
             ease: "Quad.easeOut",
             onComplete: () => overlay.destroy(),
