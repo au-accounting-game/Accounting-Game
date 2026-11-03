@@ -111,7 +111,7 @@ recordAnswer(isCorrect) {
   _popResult(text, correct, message) {
     text.setText(message)
       .setColor(correct ? "#ffffff" : "#e57373")
-      .setStroke(correct ? "#ffffff" : "#7f0000", 5)
+      .setStroke("#7f0000", correct ? 0 : 5) // no outline on correct
       .setAlpha(1)
       .setScale(0.4);
     this.tweens.killTweensOf(text);
