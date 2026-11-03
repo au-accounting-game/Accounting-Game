@@ -265,7 +265,9 @@ this.streak = 0; // STREAK COUNTER
             this.config.belt_labels = [1, 2, 3, 4, 5];
             this.game_key = "game2";
         }
-        this.scene.launch("MenuScene", { gameType: game_type });
+        if (!data.skipInstructions) {
+    this.scene.launch("MenuScene", { gameType: game_type });
+}
 
         this.answer_stats = new Map(
             this.config.basket_types.map((type) => [
@@ -276,8 +278,6 @@ this.streak = 0; // STREAK COUNTER
 
         this.points = 0;
         this.game_over_timeout = this.config.time_limit / 1000;
-
-        this.scene.launch("MenuScene");
 
         // keys
         this.keySpace = this.input.keyboard.addKey(
@@ -314,10 +314,12 @@ this.streak = 0; // STREAK COUNTER
         // show system cursor in menus
         this.input.setDefaultCursor("default");
 
-        // this comes from SpeedSelect
-    	this.gameMode = data.type;
-    	this.speedMultiplier = data.speedMultiplier || 1; // default to normal
-    }
+       // Settings passed from SpeedSelect
+this.gameMode = data.type;
+this.speedMultiplier = data.speedMultiplier || 1;
+this.isTutorial = data.isTutorial ?? false;
+this.skipInstructions = data.skipInstructions ?? false;
+        
     addBall() {
         if (this.balls.getLength() >= NUM_BALLS_AT_TIME) return;
 
@@ -821,9 +823,9 @@ this.scene.get("HudScene").update_correct_answers(
             this.checkForBall(ball, basket)
         );
 
-        this.game.events.once("start-game", (data) => {
-	    this.isTutorial = data?.isTutorial ?? false; // game or tutorial?
-            this.scene.stop("MenuScene");
+       const startGameplay = (data) => {
+    this.isTutorial = data?.isTutorial ?? this.isTutorial ?? false;
+    this.scene.stop("MenuScene");
             this.input.setDefaultCursor("none"); // hide mouse in gameplay
 
             // Use Registry for better reliability across scenes
@@ -868,7 +870,14 @@ this.scene.get("HudScene").update_correct_answers(
                     }
                 },
             });
-        });
+        };
+
+if (this.skipInstructions) {
+    // Start the selected game or tutorial after speed selection
+    startGameplay({ isTutorial: this.isTutorial });
+} else {
+    this.game.events.once("start-game", startGameplay);
+}
 
         this.game.events.on("exit-game", () => {
             this.game.events.removeListener("start-game");
