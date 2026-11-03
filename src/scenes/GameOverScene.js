@@ -164,6 +164,14 @@ export class GameOverScene extends Scene {
 
     // buttons first, so a slow or failed user lookup can't leave the screen without them
     this.createMenuButtons(centerX, centerY + panelH / 2 - 40);
+
+    // Review, top-left of the panel - only after an Accounting Equation game with misses
+    if (this.missed.length) {
+      this._makeBrownButton(centerX - panelW / 2 + 95, centerY - panelH / 2 + 45, "Review", () => {
+        this.scene.pause();
+        this.scene.launch("ReviewScene", { missed: this.missed, returnTo: this.scene.key });
+      });
+    }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this._resumeKeys());
 
     //const savedUsername = localStorage.getItem("game_username");
@@ -306,15 +314,10 @@ export class GameOverScene extends Scene {
       });
 
       if (!res.ok) throw new Error("Network response was not ok");
-      
-      this.time.delayedCall(1500, () => {
-    this.scene.start("Leaderboard", {
-        gameKey: this.gameKey,
-        highlightName: savedUsername.substring(0, 3).toUpperCase(),
-        playAgainScene: this._resolveRestartScene(),
-        missed: this.missed,
-    });
-});
+
+      // stay on this screen; the Leaderboard button shows where they placed
+      this.highlightName = savedUsername.substring(0, 3).toUpperCase();
+      this._line(centerX, centerY + 30, "Score saved!", 0x2e7d32);
 
     } catch (err) {
       console.error("Auto-submit failed:", err);
@@ -405,14 +408,7 @@ export class GameOverScene extends Scene {
 
         this._resumeKeys();
 
-      this.time.delayedCall(900, () => {
-    this.scene.start("Leaderboard", {
-        gameKey: this.gameKey,
-        highlightName: username,
-        playAgainScene: this._resolveRestartScene(),
-        missed: this.missed,
-    });
-});
+      this.highlightName = username; // for the Leaderboard button
       } catch (err) {
         console.error("Error submitting score:", err);
         const message = err.message;
@@ -445,30 +441,35 @@ export class GameOverScene extends Scene {
     });
   }
 
+  // Play Again, Leaderboard, Main Menu - spread evenly across the bottom of the panel
   createMenuButtons(centerX, baseY) {
-    const gap = 450;
-
-    this._makeBrownButton(centerX - gap / 2, baseY, "Play Again", () => {
-      this._resumeKeys();
-      this.game.musicManager?.stop();
-      this.sound.stopAll();
-      const restartScene = this._resolveRestartScene();
-      this.scene.start(restartScene);
-    });
-
-    // only after an Accounting Equation game with misses
-    if (this.missed.length) {
-      this._makeBrownButton(centerX, baseY, "Review", () => {
+    const buttons = [
+      { label: "Play Again", onClick: () => {
+        this._resumeKeys();
+        this.game.musicManager?.stop();
+        this.sound.stopAll();
+        this.scene.start(this._resolveRestartScene());
+      } },
+      // opens on top of this screen; its Exit comes back here
+      { label: "Leaderboard", onClick: () => {
         this.scene.pause();
-        this.scene.launch("ReviewScene", { missed: this.missed, returnTo: this.scene.key });
-      });
-    }
+        this.scene.launch("Leaderboard", {
+          gameKey: this.gameKey,
+          highlightName: this.highlightName,
+          returnTo: this.scene.key,
+        });
+      } },
+      { label: "Main Menu", onClick: () => {
+        this._resumeKeys();
+        this.game.musicManager?.stop();
+        this.sound.stopAll();
+        this.scene.start("MainMenuScene");
+      } },
+    ];
 
-    this._makeBrownButton(centerX + gap / 2, baseY, "Main Menu", () => {
-      this._resumeKeys();
-      this.game.musicManager?.stop();
-      this.sound.stopAll();
-      this.scene.start("MainMenuScene");
+    const spacing = 210;
+    buttons.forEach((b, i) => {
+      this._makeBrownButton(centerX + (i - (buttons.length - 1) / 2) * spacing, baseY, b.label, b.onClick);
     });
   }
 }
