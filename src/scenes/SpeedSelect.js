@@ -104,7 +104,10 @@ export class SpeedSelect extends Phaser.Scene {
       if ((this.game?.sfxVolume ?? this.sound.volume) > 0)
         this.sound.play("selection");
 
-      this.scene.start("MenuScene", {
+     this.scene.start("MainScene", {
+    type: this.gameMode,
+    skipInstructions: false
+});
     gameType: this.gameMode
 });
     });
@@ -161,9 +164,10 @@ export class SpeedSelect extends Phaser.Scene {
     this._escKey = this.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.ESC
     );
-    this._escKey.on("down", () => {
-    this.scene.start("MenuScene", {
-        gameType: this.gameMode
+  this._escKey.on("down", () => {
+    this.scene.start("MainScene", {
+        type: this.gameMode,
+        skipInstructions: false
     });
 });
   }
