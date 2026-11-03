@@ -278,13 +278,14 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
 
     // Hide gameplay UI until start
     this._uiNodes = [
-      this.qText,
-      this.timerText,
-      this.scoreText,
-      lblAsset, eq, lblLiab, plus, lblSE, pipe, lblNI,
-      ...this.selectors.map(s => s.container),
-      nextBtn, nextTxt,
-    ];
+    this.qText,
+    this.timerText,
+    this.scoreText,
+    this.questionCounterText,
+    lblAsset, eq, lblLiab, plus, lblSE, pipe, lblNI,
+    ...this.selectors.map(s => s.container),
+    nextBtn, nextTxt,
+];
     this._setGameplayUIVisible(false);
 
     // Kickoff
@@ -416,7 +417,8 @@ this.selectors.forEach(s => s.valueText.setText(
       sel.Liability === cor.Liability &&
       sel.SE === cor.SE &&
       sel.NI === cor.NI;
-
+this.recordAnswer(allMatch);
+      
     const nextBtn = this._uiNodes.find(n => n && n.type === "Rectangle" && n.width === 180 && n.height === 50);
 
     if (allMatch) {
