@@ -12,10 +12,13 @@ export class SpeedSelect extends Phaser.Scene {
     super("SpeedSelect");
   }
 
-  init(data) {
-    // This comes from MainMenuScene
+ init(data) {
+    // Remember which game was selected
     this.gameMode = data.type;
-  }
+
+    // Remember whether the student selected Game or Tutorial
+    this.isTutorial = data.isTutorial ?? false;
+}
 
   create() {
     const { width, height } = this.scale;
@@ -142,10 +145,12 @@ export class SpeedSelect extends Phaser.Scene {
           // Stop menu music before gameplay
           this.game.musicManager?.stop();
 
-          this.scene.start("MainScene", {
-            type: this.gameMode,
-            speedMultiplier: speed.multiplier
-          });
+         this.scene.start("MainScene", {
+    type: this.gameMode,
+    speedMultiplier: speed.multiplier,
+    isTutorial: this.isTutorial,
+    skipInstructions: true
+});
         }
       );
     });
