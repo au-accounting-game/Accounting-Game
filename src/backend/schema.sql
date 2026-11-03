@@ -15,7 +15,7 @@ CREATE DATABASE leaderboard OWNER game_app;
 -- We want to keep the old data for now, in case sponsor wants it or we need to revert 
 CREATE TABLE IF NOT EXISTS scores (
   id SERIAL PRIMARY KEY,
-  game TEXT NOT NULL CHECK (game IN ('game1', 'game2', 'game3-1', 'game3-2', 'game3-3')),
+  game TEXT NOT NULL CHECK (game IN ('game1', 'game2', 'game3-1', 'game3-2', 'game3-3', 'game3-4')),
   username VARCHAR(3) NOT NULL CHECK (username ~ '^[a-zA-Z]{3}$'),
   score INTEGER NOT NULL CHECK (score >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.player_profiles (
 CREATE TABLE IF NOT EXISTS public.game_analytics (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) REFERENCES public.player_profiles(username),
-    game TEXT NOT NULL CHECK (game IN ('game1', 'game2', 'game3-1', 'game3-2', 'game3-3')),
+    game TEXT NOT NULL CHECK (game IN ('game1', 'game2', 'game3-1', 'game3-2', 'game3-3', 'game3-4')),
     score INTEGER NOT NULL CHECK (score >= 0),
     time_played INTEGER DEFAULT 0,
     played_at TIMESTAMPTZ DEFAULT NOW()

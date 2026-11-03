@@ -18,6 +18,7 @@ import { SpeedSelect } from "./scenes/SpeedSelect";
 // NEW: GameMode 3 (3 levels)
 import GM3Level1 from "./scenes/GM3Level1";
 import GM3Level2 from "./scenes/GM3Level2";
+import GM3Effects from "./scenes/GM3Effects";
 import GM3Level3 from "./scenes/GM3Level3";
 import GM3PauseScene from "./scenes/GM3PauseScene";
 
@@ -71,6 +72,7 @@ const config = {
     // Removed: GM3LevelSelect,
     GM3Level1,
     GM3Level2,
+    GM3Effects,
     GM3Level3,
     GM3PauseScene,
     Leaderboard,

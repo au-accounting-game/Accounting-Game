@@ -136,13 +136,14 @@ export default class AdminDash extends Scene {
         this.sortKey = null;
         this.sortDir = 1;
 
-        // game names for the 5 games, coming from spreadsheet
+        // game names for the 6 games, coming from spreadsheet
         const GAME_NAMES = {
             "game1":   "Db. vs. Cr.",
             "game2":   "Elements",
             "game3-1": "Balance",
-            "game3-2": "Effects",
+            "game3-2": "Effects + NI",
             "game3-3": "Errors",
+            "game3-4": "Effects",
         };
 
         // Move the container slightly lower so the Title (at -60) stays within the mask

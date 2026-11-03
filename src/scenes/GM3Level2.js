@@ -2,16 +2,28 @@ import * as XLSX from "xlsx";
 import BaseGM3Scene from "./BaseGM3Scene";
 import { orderByRecency, markSeen } from "../gameobjects/QuestionHistory";
 
+// Two variants of the Effect of Transactions game share this scene:
+// - withNetIncome: true  -> A = L + SE | Net Income   (scene "GM3Level2", leaderboard "game3-2")
+// - withNetIncome: false -> A = L + SE                (scene "GM3Effects", leaderboard "game3-4")
 export default class GM3Level2 extends BaseGM3Scene {
-  constructor() {
-    super("GM3Level2", { title: "", level: 2, timeLimit: 90 });
+  constructor(key = "GM3Level2", { withNetIncome = true } = {}) {
+    super(key, { title: "", level: 2, timeLimit: 90 });
+    this.withNetIncome = withNetIncome;
+    this.modeName = withNetIncome ? "GM3-Level2" : "GM3-Effects";
+    this.answerKeys = withNetIncome
+      ? ["Asset", "Liability", "SE", "NI"]
+      : ["Asset", "Liability", "SE"];
     this.currentIndex = 0;
     this.questions = [];
     this._uiNodes = [];
     this.selectors = [];
     // Default all selections to "No Effect"
-    this.selections = { Asset: "No Effect", Liability: "No Effect", SE: "No Effect", NI: "No Effect" };
+    this.selections = this._blankSelections();
     this.score = 0; // show as POINTS: 0000
+  }
+
+  _blankSelections() {
+    return Object.fromEntries(this.answerKeys.map(k => [k, "No Effect"]));
   }
 
   onTimeUp() { this._finishToGameOver("timeup"); }
@@ -25,7 +37,7 @@ export default class GM3Level2 extends BaseGM3Scene {
       markSeen(this.apiBase, "medium", this.questions.slice(0, this.currentIndex + 1));
     }
 
-    this.scene.start("GameOverScene", { score: this.score, mode: "GM3-Level2", reason,
+    this.scene.start("GameOverScene", { score: this.score, mode: this.modeName, reason,
       timeSpentPlaying: Math.floor((this.time.now - this.startTime) / 1000),
      });
   }
@@ -70,7 +82,10 @@ export default class GM3Level2 extends BaseGM3Scene {
 
         if (!q) continue;
 
-        rows.push({ question: q, correct: { Asset: asset, Liability: liab, SE: se, NI: ni } });
+        const correct = this.withNetIncome
+          ? { Asset: asset, Liability: liab, SE: se, NI: ni }
+          : { Asset: asset, Liability: liab, SE: se };
+        rows.push({ question: q, correct });
       }
 
       if (!rows.length) return this._failAndBack("No valid questions found in the sheet.");
@@ -163,16 +178,26 @@ export default class GM3Level2 extends BaseGM3Scene {
     const eq      = this.add.text(lblAsset.x + lblAsset.width + 20, EQ_Y, "=", symbolStyle).setOrigin(0, 0.5).setDepth(6);
     const lblLiab = this.add.text(eq.x + 26, EQ_Y, "Liability", labelStyle).setOrigin(0, 0.5).setDepth(6);
     const plus    = this.add.text(lblLiab.x + lblLiab.width + 14, EQ_Y, "+", symbolStyle).setOrigin(0, 0.5).setDepth(6);
-    const lblSE   = this.add.text(plus.x + 20, EQ_Y, "Stockholders Equity", labelStyle).setOrigin(0, 0.5).setDepth(6);
-    const pipe    = this.add.text(lblSE.x + lblSE.width + 36, EQ_Y, "|", symbolStyle).setOrigin(0, 0.5).setDepth(6);
-    const lblNI   = this.add.text(pipe.x + 22, EQ_Y, "Net Income", labelStyle).setOrigin(0, 0.5).setDepth(6);
+
+    // equation labels, and the label each selector sits under (by answer key)
+    const lblSE = this.add.text(plus.x + 20, EQ_Y, "Stockholders Equity", labelStyle).setOrigin(0, 0.5).setDepth(6);
+    const eqNodes = [lblAsset, eq, lblLiab, plus, lblSE];
+    const answerLabels = { Asset: lblAsset, Liability: lblLiab, SE: lblSE };
+
+    if (this.withNetIncome) {
+      const pipe  = this.add.text(lblSE.x + lblSE.width + 36, EQ_Y, "|", symbolStyle).setOrigin(0, 0.5).setDepth(6);
+      const lblNI = this.add.text(pipe.x + 22, EQ_Y, "Net Income", labelStyle).setOrigin(0, 0.5).setDepth(6);
+      eqNodes.push(pipe, lblNI);
+      answerLabels.NI = lblNI;
+    } else {
+      // no Net Income column, so the equation is narrower - center it
+      const shift = (width - (lblSE.x + lblSE.width - leftX)) / 2 - leftX;
+      eqNodes.forEach(n => { n.x += shift; });
+    }
 
     // Selector geometry
     const boxW = 150, boxH = 52;
-    const assetCenter = lblAsset.x + lblAsset.width / 2;
-    const liabCenter  = lblLiab.x + lblLiab.width / 2;
-    const seCenter    = lblSE.x + lblSE.width / 2;
-    const niCenter    = lblNI.x + lblNI.width / 2;
+    const centerOf = (lbl) => lbl.x + lbl.width / 2;
 
     const arrowBase = 42, arrowHeight = 28, ARROW_V_OFFSET = 14;
     const makeArrowPolygon = (base, heightPx, direction) => {
@@ -250,12 +275,7 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     };
 
     // Build selectors
-    this.selectors = [
-      makeSelector(assetCenter, "Asset"),
-      makeSelector(liabCenter,  "Liability"),
-      makeSelector(seCenter,    "SE"),
-      makeSelector(niCenter,    "NI"),
-    ];
+    this.selectors = this.answerKeys.map(key => makeSelector(centerOf(answerLabels[key]), key));
 
     // Submit button
     const nextY = selY + 100;
@@ -278,14 +298,14 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
 
     // Hide gameplay UI until start
     this._uiNodes = [
-    this.qText,
-    this.timerText,
-    this.scoreText,
-    this.questionCounterText,
-    lblAsset, eq, lblLiab, plus, lblSE, pipe, lblNI,
-    ...this.selectors.map(s => s.container),
-    nextBtn, nextTxt,
-];
+      this.qText,
+      this.timerText,
+      this.scoreText,
+      this.questionCounterText,
+      ...eqNodes,
+      ...this.selectors.map(s => s.container),
+      nextBtn, nextTxt,
+    ];
     this._setGameplayUIVisible(false);
 
     // Kickoff
@@ -396,12 +416,13 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     this.qText.setText(q);
 
     // Reset selectors to "No Effect" each question
-    this.selections = { Asset: "No Effect", Liability: "No Effect", SE: "No Effect", NI: "No Effect" };
-this.selectors.forEach(s => s.valueText.setText(
-    this.selections[s.key] === "+" ? "Increase" :
-    this.selections[s.key] === "-" ? "Decrease" :
-    "No Effect"
-));
+    this.selections = this._blankSelections();
+    this.selectors.forEach(s => s.valueText.setText(
+      this.selections[s.key] === "+" ? "Increase" :
+      this.selections[s.key] === "-" ? "Decrease" :
+      "No Effect"
+    ));
+
     if (show) this._setGameplayUIVisible(true);
   }
 
@@ -410,15 +431,11 @@ this.selectors.forEach(s => s.valueText.setText(
     if (!item) return;
 
     const sel = this.selections;
-    const cor = item.correct ?? { Asset: "No Effect", Liability: "No Effect", SE: "No Effect", NI: "No Effect" };
+    const cor = item.correct ?? this._blankSelections();
 
-    const allMatch =
-      sel.Asset === cor.Asset &&
-      sel.Liability === cor.Liability &&
-      sel.SE === cor.SE &&
-      sel.NI === cor.NI;
-this.recordAnswer(allMatch);
-      
+    const allMatch = this.answerKeys.every(k => sel[k] === cor[k]);
+    this.recordAnswer(allMatch);
+
     const nextBtn = this._uiNodes.find(n => n && n.type === "Rectangle" && n.width === 180 && n.height === 50);
 
     if (allMatch) {

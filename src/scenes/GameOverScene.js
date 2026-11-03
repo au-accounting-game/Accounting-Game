@@ -32,6 +32,7 @@ export class GameOverScene extends Scene {
     const key = String(this.gameKey || "");
     if (key === "GM3Level1" || key === "GM3-Level1") return "GM3Level1";
     if (key === "GM3Level2" || key === "GM3-Level2") return "GM3Level2";
+    if (key === "GM3Effects" || key === "GM3-Effects") return "GM3Effects";
     if (key === "GM3Level3" || key === "GM3-Level3") return "GM3Level3";
     return "MainScene";
   }

@@ -117,12 +117,13 @@ export class Leaderboard extends Scene {
             { label: "Dr. vs. Cr.", key: "game1" },
             { label: "Elements", key: "game2" },
             { label: "Balance", key: "game3-1" },
-            { label: "Effects", key: "game3-2" },
+            { label: "Effects", key: "game3-4" },
+            { label: "Effects+NI", key: "game3-2" },
             { label: "Errors", key: "game3-3" },
         ];
 
         const createButton = (relX, relY, labelText, onClick) => {
-            const rect = this.add.rectangle(0, 0, 125, 50, 0x7f1a02).setStrokeStyle(3, 0xdcc89f);
+            const rect = this.add.rectangle(0, 0, 112, 50, 0x7f1a02).setStrokeStyle(3, 0xdcc89f);
             const label = this.add.text(0, 0, labelText, {
                 fontSize: "30px",
                 fontFamily: '"Jersey 10", sans-serif',
@@ -130,6 +131,8 @@ export class Leaderboard extends Scene {
                 align: "center",
                 //wordWrap: { width: 90, useAdvancedWrap: true },  // wrap text within button width
             }).setOrigin(0.5);
+            // shrink longer labels (e.g. "Effects+NI") to fit the button
+            if (label.width > rect.width - 10) label.setScale((rect.width - 10) / label.width);
 
             const button = this.add.container(relX, relY, [rect, label]);
             rect.setInteractive({ useHandCursor: true });
@@ -158,7 +161,7 @@ export class Leaderboard extends Scene {
         };
 
         const buttonRowY = panelHeight / 2 - 35;
-        const buttonSpacing = 140;
+        const buttonSpacing = 120;
         const buttonStartX = -((modes.length - 1) * buttonSpacing) / 2;
 
         modes.forEach((mode, i) => {

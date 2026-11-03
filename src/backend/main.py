@@ -39,7 +39,7 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
-ALLOWED_GAMES = {"game1", "game2", "game3-1", "game3-2", "game3-3"}
+ALLOWED_GAMES = {"game1", "game2", "game3-1", "game3-2", "game3-3", "game3-4"}
 TOP_N = 100
 
 GAME_ALIASES = {
@@ -47,7 +47,8 @@ GAME_ALIASES = {
     "game2": "game2",
     "gm3-level1": "game3-1",
     "gm3-level2": "game3-2",
-    "gm3-level3": "game3-3"
+    "gm3-level3": "game3-3",
+    "gm3-effects": "game3-4"  # Effect of Transactions without Net Income (CC + RE)
 }
  
 @asynccontextmanager
