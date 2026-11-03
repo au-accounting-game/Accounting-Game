@@ -401,21 +401,22 @@ export default class GM3Level3 extends BaseGM3Scene {
             .on("pointerout", () => nextBtn.setFillStyle(beige))
             .on("pointerdown", () => this._onSubmit());
 
-        this._uiNodes = [
-            this.qText,
-            this.timerText,
-            this.scoreText,
-            lblAsset,
-            eq,
-            lblLiab,
-            plus,
-            lblSE,
-            pipe,
-            lblNI,
-            ...this.selectors.map((s) => s.container),
-            nextBtn,
-            nextTxt,
-        ];
+ this._uiNodes = [
+    this.qText,
+    this.timerText,
+    this.scoreText,
+    this.questionCounterText,
+    lblAsset,
+    eq,
+    lblLiab,
+    plus,
+    lblSE,
+    pipe,
+    lblNI,
+    ...this.selectors.map((s) => s.container),
+    nextBtn,
+    nextTxt,
+];
         this._setGameplayUIVisible(false);
 
         this.currentIndex = 0;
@@ -575,7 +576,8 @@ export default class GM3Level3 extends BaseGM3Scene {
             sel.Liability === cor.Liability &&
             sel.SE === cor.SE &&
             sel.NI === cor.NI;
-
+this.recordAnswer(allMatch);
+        
         const nextBtn = this._uiNodes.find(
             (n) =>
                 n &&
