@@ -140,36 +140,26 @@ export class MainMenuScene extends Scene {
       }
     };
 
-    // stack buttons vertically, centered a little below the middle;
-    // replaces whatever menu buttons are currently showing
-    let menuButtons = [];
+    // stack buttons vertically, centered a little below the middle
     const layoutButtons = (items, spacing = 65) => {
-      menuButtons.forEach(b => b.destroy());
-
       const blockHeight = (items.length - 1) * spacing;
       const startY = height / 2 - blockHeight / 2 + 50;
 
-      menuButtons = items.map((item, index) =>
-        createButton(width / 2, startY + index * spacing, item.label, item.onClick ?? (() => onOptionSelected(item)))
-      );
+      items.forEach((item, index) => {
+        createButton(width / 2, startY + index * spacing, item.label, item.onClick ?? (() => onOptionSelected(item)));
+      });
     };
 
     // default menu (everyone except ACCT 2110)
     const showDefaultMenu = () => layoutButtons(options);
 
-    // ACCT 2110 menu: Effect of Transactions opens a choice of with/without
-    // Net Income, then Balance, Debit/Credit, 5 Elements
+    // ACCT 2110 menu: Effect of Transactions opens EffectsSelect (with or
+    // without Net Income), then Balance, Debit/Credit, 5 Elements
     const show2110Menu = () => layoutButtons([
-      { label: "Effect of Transactions", onClick: () => showEffectsChoice() },
+      { label: "Effect of Transactions", onClick: () => this.scene.start("EffectsSelect") },
       { label: "Balance the Accounting Equation", scene: "GM3Level1" },
       { label: "Debit/Credit", type: "debit_credit" },
       { label: "5 Elements", type: "accounting" },
-    ]);
-
-    const showEffectsChoice = () => layoutButtons([
-      { label: "Without Net Income", scene: "GM3Effects" },
-      { label: "With Net Income", scene: "GM3Level2" },
-      { label: "Back", onClick: () => show2110Menu() },
     ]);
 
     // pick the menu from the logged-in user's sections. With no logged-in
