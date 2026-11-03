@@ -435,7 +435,7 @@ this.recordAnswer(allMatch);
     if (nextBtn) this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
     this.input.enabled = false;
-    this.time.delayedCall(1300, () => {
+    this.time.delayedCall(1400, () => {
       this.currentIndex++;
       this._showCurrent(true);
       this.input.enabled = true;
