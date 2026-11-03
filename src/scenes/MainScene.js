@@ -23,19 +23,19 @@ const DESCRIPTION_MAP = new Map([
     [ASSETS, "A present right of an entity to an economic benefit."],
     [
         LIABILITIES,
-        "A present obligation that requires an entity to transferor otherwise provide economic benefits to others.",
+        "A present obligation that requires an entity to transfer or otherwise provide economic benefits to others.",
     ],
     [
         STOCKHOLDERS_EQUITY,
-        "The residual interest in the assets of anentity that remains after deducting its liabilities.",
+        "The residual interest in the assets of an entity that remains after deducting its liabilities.",
     ],
     [
         EXPENSES,
-        "Expenses are outflows or other using up of assets of anentity or incurrences of its liabilities (or a combination of both) from delivering orproducing goods, rendering services, or carrying out other activities",
+        "Expenses are outflows or other using up of assets of an entity or incurrences of its liabilities (or a combination of both) from delivering or producing goods, rendering services, or carrying out other activities.",
     ],
     [
         REVENUES,
-        "Inflows or other enhancements of assets of an entityor settlements of its liabilities (or a combination of both) from delivering orproducing goods, rendering services, or carrying out other activities",
+        "Inflows or other enhancements of assets of an entity or settlements of its liabilities (or a combination of both) from delivering or producing goods, rendering services, or carrying out other activities.",
     ],
 ]);
 // Point value comes from each term's cell color in the spreadsheet, so

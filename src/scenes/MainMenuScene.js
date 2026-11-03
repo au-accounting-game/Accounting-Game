@@ -187,6 +187,15 @@ export class MainMenuScene extends Scene {
       const loggedIn = user?.userid != null;
       this.registry.set("loggedIn", loggedIn);
 
+      // the menu unlocks only once the server confirms a login session;
+      // otherwise ask the player to sign in (not locally - SSO is server-only)
+      if (loggedIn) {
+        sessionStorage.setItem('sso_completed', 'true');
+      } else if (!isLocal) {
+        sessionStorage.removeItem('sso_completed'); // session expired
+        createSSOOverlay();
+      }
+
       // "2026F_ACCT2110_001,2026S_ACCT5110_002" -> ["ACCT 2110", "ACCT 5110"]
       const sections = String(user?.sections ?? "");
       let classes = [...new Set(
@@ -321,13 +330,9 @@ export class MainMenuScene extends Scene {
       document.body.appendChild(overlay);
 
       modal.querySelector('#sso-submit-trigger').onclick = () => {
-          sessionStorage.setItem('sso_completed', 'true');
           window.location.href = "https://accounting-game.cse.eng.auburn.edu/saml/login";
       };
     };
-
-    // CALL THE OVERLAY
-    this.time.delayedCall(1000, createSSOOverlay);
   }
 
   // OLD VOLUME SLIDER CODE, MAY REUSE
