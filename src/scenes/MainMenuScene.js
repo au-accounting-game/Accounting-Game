@@ -89,22 +89,20 @@ export class MainMenuScene extends Scene {
       { label: "Accounting Errors", scene: "GM3Level3" },
     ];
 
-    const createButton = (x, y, labelText, onClick, { w = 460, h = 50, textScale = 0.23 } = {}) => {
+    const createButton = (x, y, labelText, onClick) => {
       // visual body of the button
-      const border = this.add.rectangle(0, 0, w + 4, h + 4, 0x7f1a02).setDepth(3);
+      const border = this.add.rectangle(0, 0, 464, 54, 0x7f1a02).setDepth(3);
       border.setStrokeStyle(3, 0xdcc89f);
 
       // button hitbox
-      const rect = this.add.rectangle(0, 0, w, h, 0x7f1a02).setDepth(3);
+      const rect = this.add.rectangle(0, 0, 460, 50, 0x7f1a02).setDepth(3);
 
       // label: text on top of button
       const label = this.add.text(0, 0, labelText, {
         fontSize: "128px",
         fontFamily: '"Jersey 10", sans-serif',
         color: "#dcc89f",
-        align: "center",
-        lineSpacing: -20,
-      }).setOrigin(0.5).setDepth(3).setScale(textScale);
+      }).setOrigin(0.5).setDepth(3).setScale(0.23);
 
       const button = this.add.container(x, y, [border, rect, label]).setDepth(3);
 
@@ -142,63 +140,78 @@ export class MainMenuScene extends Scene {
       }
     };
 
-    // stack buttons vertically, centered a little below the middle
-    const layoutButtons = (items, spacing, size) => {
+    // stack buttons vertically, centered a little below the middle;
+    // replaces whatever menu buttons are currently showing
+    let menuButtons = [];
+    const layoutButtons = (items, spacing = 65) => {
+      menuButtons.forEach(b => b.destroy());
+
       const blockHeight = (items.length - 1) * spacing;
       const startY = height / 2 - blockHeight / 2 + 50;
 
-      items.forEach((item, index) => {
-        createButton(width / 2, startY + index * spacing, item.label, () => onOptionSelected(item), size);
-      });
+      menuButtons = items.map((item, index) =>
+        createButton(width / 2, startY + index * spacing, item.label, item.onClick ?? (() => onOptionSelected(item)))
+      );
     };
 
     // default menu (everyone except ACCT 2110)
-    const showDefaultMenu = () => layoutButtons(options, 65, { w: 460, h: 50, textScale: 0.23 });
+    const showDefaultMenu = () => layoutButtons(options);
 
-    // ACCT 2110 menu: Effect of Transactions without and with Net Income,
-    // then Balancing the Accounting Equation, Debits and Credits, Five Elements
+    // ACCT 2110 menu: Effect of Transactions opens a choice of with/without
+    // Net Income, then Balance, Debit/Credit, 5 Elements
     const show2110Menu = () => layoutButtons([
-      { label: "The Accounting Equation –\nEffect of Transactions", scene: "GM3Effects" },
-      { label: "The Accounting Equation – Effect of\nTransactions including Net Income", scene: "GM3Level2" },
-      { label: "The Accounting Equation –\nBalancing the Accounting Equation", scene: "GM3Level1" },
-      { label: "Debits and Credits", type: "debit_credit" },
-      { label: "The Five Elements", type: "accounting" },
-    ], 72, { w: 440, h: 62, textScale: 0.22 });
+      { label: "Effect of Transactions", onClick: () => showEffectsChoice() },
+      { label: "Balance the Accounting Equation", scene: "GM3Level1" },
+      { label: "Debit/Credit", type: "debit_credit" },
+      { label: "5 Elements", type: "accounting" },
+    ]);
 
-    // pick the menu from the logged-in user's sections; fall back to the
-    // default menu if there's no session (local dev) or the fetch fails
+    const showEffectsChoice = () => layoutButtons([
+      { label: "Without Net Income", scene: "GM3Effects" },
+      { label: "With Net Income", scene: "GM3Level2" },
+      { label: "Back", onClick: () => show2110Menu() },
+    ]);
+
+    // pick the menu from the logged-in user's sections. With no logged-in
+    // user (local dev, no session) the class chosen in Settings is used.
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     const apiBase = isLocal ? "http://localhost:8000" : "https://accounting-game.cse.eng.auburn.edu/api";
 
     // local testing only: ?section=2026F_ACCT2110_001 fakes the user's sections
     const testSections = isLocal ? new URLSearchParams(window.location.search).get("section") : null;
 
-    const sectionsPromise = testSections
-      ? Promise.resolve(testSections)
+    const userPromise = testSections
+      ? Promise.resolve({ userid: "local-test", sections: testSections })
       : fetch(`${apiBase}/fetch-user`)
           .then(res => res.json())
-          .then(user => String(user?.sections ?? ""))
           .catch(err => {
             console.error("Failed to fetch user sections for main menu", err);
-            return "";
+            return {};
           });
 
-    sectionsPromise.then(sections => {
+    userPromise.then(user => {
       // scene may have been left while the fetch was in flight
       if (!this.sys.isActive()) return;
 
+      // Settings only offers the class picker when nobody is logged in
+      const loggedIn = user?.userid != null;
+      this.registry.set("loggedIn", loggedIn);
+
       // "2026F_ACCT2110_001,2026S_ACCT5110_002" -> ["ACCT 2110", "ACCT 5110"]
-      const classes = [...new Set(
+      const sections = String(user?.sections ?? "");
+      let classes = [...new Set(
         [...sections.toUpperCase().matchAll(/ACCT(\d{4})/g)].map(m => `ACCT ${m[1]}`)
       )];
+      if (!loggedIn) {
+        const picked = localStorage.getItem("class_view");
+        classes = picked ? [picked] : [];
+      }
 
       // games pick their course's worksheets from this (MainScene.termSource)
       this.registry.set("courses", classes);
 
       if (classes.includes("ACCT 2110")) show2110Menu();
       else showDefaultMenu();
-
-      if (classes.length) this.showWelcomeBubble(classes.join(" & "));
     });
 
     // ***** ICONS *****
@@ -373,41 +386,6 @@ startGame(selectedOptions) {
         });
     });
 }
-
-  // speech bubble from the tiger in home_fg: "Welcome to ACCT 2110!"
-  showWelcomeBubble(className) {
-    const { width } = this.scale;
-    const BROWN = 0x7f1a02, BEIGE = 0xf5deb3;
-
-    const text = this.add.text(0, 0, `Welcome to\n${className.replace(" & ", "\n& ")}!`, {
-      fontSize: "24px",
-      fontFamily: '"Jersey 10", sans-serif',
-      color: "#7f1a02",
-      align: "center",
-      lineSpacing: -4,
-    }).setOrigin(0.5);
-
-    // bubble hugs the right screen edge, beside the tiger's head
-    const padX = 10, padY = 6;
-    const bw = text.width + padX * 2;
-    const bh = text.height + padY * 2;
-    const cx = width - 8 - bw / 2;
-    const cy = 200;
-
-    // tail points left/down toward the tiger's face
-    const tailTip = { x: -bw / 2 - 18, y: bh / 2 + 10 };
-    const g = this.add.graphics();
-    g.fillStyle(BEIGE, 1);
-    g.lineStyle(3, BROWN, 1);
-    g.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, 10);
-    g.strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, 10);
-    g.fillTriangle(-bw / 2 + 2, bh / 2 - 22, -bw / 2 + 2, bh / 2 - 6, tailTip.x, tailTip.y);
-    g.lineBetween(-bw / 2, bh / 2 - 22, tailTip.x, tailTip.y);
-    g.lineBetween(-bw / 2, bh / 2 - 6, tailTip.x, tailTip.y);
-
-    const bubble = this.add.container(cx, cy, [g, text]).setDepth(4).setScale(0);
-    this.tweens.add({ targets: bubble, scale: 1, duration: 300, delay: 400, ease: "Back.easeOut" });
-  }
 
   startGameMode3(sceneKey) {
     this.cameras.main.fadeOut(500, 0, 0, 0);

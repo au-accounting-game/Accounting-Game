@@ -118,6 +118,36 @@ export class SettingsScene extends Scene {
             color: "#dcc89f",
         }).setOrigin(0.5);
 
+        // 3. Class picker - only when nobody is logged in (no sections to go by);
+        // the main menu and games use the picked class (MainMenuScene)
+        if (this.registry.get("loggedIn") !== true) {
+            const classY = panelY + 60;
+            this.add.text(panelX - 180, classY, "Class", {
+                fontFamily: '"Jersey 10", sans-serif',
+                fontSize: "42px",
+                color: "#dcc89f",
+            }).setOrigin(0.5);
+
+            // "" = default menu for every other class
+            const classChoices = [
+                { label: "Default", value: "" },
+                { label: "ACCT 2110", value: "ACCT 2110" },
+            ];
+            const classButtons = classChoices.map((choice, i) =>
+                createButton(panelX - 20 + i * 150, classY, choice.label, () => {
+                    if (choice.value) localStorage.setItem("class_view", choice.value);
+                    else localStorage.removeItem("class_view");
+                    showPicked();
+                })
+            );
+            // the picked class is drawn at full strength, the other dimmed
+            const showPicked = () => {
+                const picked = localStorage.getItem("class_view") ?? "";
+                classButtons.forEach((b, i) => b.setAlpha(classChoices[i].value === picked ? 1 : 0.45));
+            };
+            showPicked();
+        }
+
 	// DELETE LATER (keep for until new dashboards/login working)
 	/*
         // 3. Login Test Button (Center)
