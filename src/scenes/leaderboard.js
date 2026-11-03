@@ -10,6 +10,7 @@ export class Leaderboard extends Scene {
         this.highlightName = data.highlightName || null; 
         this.scoreScope = "section"; // tab state
         this.playAgainScene = data.playAgainScene || null;
+        this.missed = data.missed ?? []; // from GameOverScene, for the Review button
     }
 
     async create() {
@@ -192,6 +193,20 @@ if (this.playAgainScene) {
         }
     );
     this.leaderboardContainer.add(playAgainBtn);
+}
+
+// Review button below Play Again, after an Accounting Equation game with misses
+if (this.missed.length) {
+    const reviewBtn = createButton(
+        -panelWidth / 2 + 72.5,
+        -panelHeight / 2 + 155,
+        "Review",
+        () => {
+            this.scene.pause();
+            this.scene.launch("ReviewScene", { missed: this.missed, returnTo: this.scene.key });
+        }
+    );
+    this.leaderboardContainer.add(reviewBtn);
 }
 
         // Dashboard Arrow

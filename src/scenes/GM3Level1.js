@@ -35,7 +35,7 @@ export default class GM3Level1 extends BaseGM3Scene {
 
     const startTime = this.registry.get('levelStartTime') || Date.now();
     const timeSpentPlaying = Math.floor((Date.now() - startTime) / 1000);
-    this.scene.start("GameOverScene", {
+    this._endToGameOver({
         score: this.score,
         mode: "GM3-Level1",
         reason,
@@ -249,10 +249,14 @@ export default class GM3Level1 extends BaseGM3Scene {
     } else {
       this.inputBox.setStrokeStyle(4, 0x8b0000); // Turn box border red
       this._popResult(this.feedbackText, false, `Incorrect!\nCorrect answer: ${item.correctAnswer}`);
+      this._recordMiss(item.question, [
+        { label: "Answer", correct: `$${item.correctAnswer}`, yours: `$${this.currentInput}` },
+      ]);
     }
 
     // Delay so they can read the feedback, then automatically advance to next question
-    this.time.delayedCall(1200, () => {
+    // a miss stays up longer so the correct answer can be read
+    this.time.delayedCall(this.currentInput === item.correctAnswer ? 1200 : 2000, () => {
       this.currentIndex++;
       this._showCurrent(true);
     });

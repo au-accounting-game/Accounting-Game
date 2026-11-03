@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import BaseGM3Scene from "./BaseGM3Scene";
+import BaseGM3Scene, { ELEMENT_NAMES } from "./BaseGM3Scene";
 import { orderByRecency, markSeen } from "../gameobjects/QuestionHistory";
 
 // Two variants of the Effect of Transactions game share this scene:
@@ -37,7 +37,7 @@ export default class GM3Level2 extends BaseGM3Scene {
       markSeen(this.apiBase, "medium", this.questions.slice(0, this.currentIndex + 1));
     }
 
-    this.scene.start("GameOverScene", { score: this.score, mode: this.modeName, reason,
+    this._endToGameOver({ score: this.score, mode: this.modeName, reason,
       timeSpentPlaying: Math.floor((this.time.now - this.startTime) / 1000),
      });
   }
@@ -426,6 +426,7 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
       this.selections[s.key] === "-" ? "Decrease" :
       "No Effect"
     ));
+    this._resetSelectorOutlines();
 
     if (show) this._setGameplayUIVisible(true);
   }
@@ -452,12 +453,19 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
       this._showResult(false);
       this._flashScreen(0x8b0000, 0.35);
       if (nextBtn) nextBtn.setFillStyle(0x8b0000);
+
+      const labelOf = v => v === "+" ? "Increase" : v === "-" ? "Decrease" : "No Effect";
+      this._revealCorrect(sel, cor, labelOf);
+      this._recordMiss(item.question ?? String(item), this.answerKeys.map(k => ({
+        label: ELEMENT_NAMES[k], correct: labelOf(cor[k]), yours: labelOf(sel[k]),
+      })));
     }
 
     if (nextBtn) this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
     this.input.enabled = false;
-    this.time.delayedCall(1200, () => {
+    // a miss stays up longer so the correct answers can be read
+    this.time.delayedCall(allMatch ? 1200 : 2000, () => {
       this.currentIndex++;
       this._showCurrent(true);
       this.input.enabled = true;

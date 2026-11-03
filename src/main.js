@@ -10,6 +10,7 @@ import { MainMenuScene } from "./scenes/MainMenuScene";
 import { PauseScene } from "./scenes/PauseScene";
 import { SettingsScene } from "./scenes/SettingScene";
 import { StatsScene } from "./scenes/StatsScene";
+import { ReviewScene } from "./scenes/ReviewScene";
 import { Leaderboard } from "./scenes/leaderboard";
 import MusicManager from "./gameobjects/MusicManager";
 
@@ -71,6 +72,7 @@ const config = {
     PauseScene,
     SettingsScene,
     StatsScene,
+    ReviewScene,
     // Removed: EquationScene,
     // New third gamemode scenes:
     // Removed: GM3LevelSelect,

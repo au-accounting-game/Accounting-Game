@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import BaseGM3Scene from "./BaseGM3Scene";
+import BaseGM3Scene, { ELEMENT_NAMES } from "./BaseGM3Scene";
 import { orderByRecency, markSeen } from "../gameobjects/QuestionHistory";
 
 export default class GM3Level3 extends BaseGM3Scene {
@@ -26,7 +26,7 @@ export default class GM3Level3 extends BaseGM3Scene {
             markSeen(this.apiBase, "hard", this.questions.slice(0, this.currentIndex + 1));
         }
 
-        this.scene.start("GameOverScene", {
+        this._endToGameOver({
             score: this.score,
             mode: "GM3-Level3",
             reason,
@@ -557,6 +557,7 @@ export default class GM3Level3 extends BaseGM3Scene {
         this.selectors.forEach((s) =>
             s.valueText.setText("No Effect")
         );
+        this._resetSelectorOutlines();
 
         if (show) this._setGameplayUIVisible(true);
     }
@@ -598,13 +599,25 @@ this.recordAnswer(allMatch);
             this._showResult(false);
             this._flashScreen(0x8b0000, 0.35);
             if (nextBtn) nextBtn.setFillStyle(0x8b0000);
+
+            const labelOf = (v) => ({ O: "Overstated", U: "Understated" })[v] ?? "No Effect";
+            this._revealCorrect(sel, cor, labelOf);
+            this._recordMiss(
+                item.question ?? String(item),
+                this.selectors.map((s) => ({
+                    label: ELEMENT_NAMES[s.key],
+                    correct: labelOf(cor[s.key]),
+                    yours: labelOf(sel[s.key]),
+                }))
+            );
         }
 
         if (nextBtn)
             this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
         this.input.enabled = false;
-        this.time.delayedCall(1200, () => {
+        // a miss stays up longer so the correct answers can be read
+        this.time.delayedCall(allMatch ? 1200 : 2000, () => {
             this.currentIndex++;
             this._showCurrent(true);
             this.input.enabled = true;
