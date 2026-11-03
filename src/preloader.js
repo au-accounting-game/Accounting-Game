@@ -101,7 +101,7 @@ export class Preloader extends Phaser.Scene {
         this.load.audio("error", "music/error_sound.mp3");
 
         // Excel file
-        this.load.binary("excelData", "UpdatedAccountingElements_v2.26.xlsx");
+        this.load.binary("excelData", "AccountingElements.xlsx");
 
         //leaderboard icon
         this.load.image('leaderboardIcon', 'trophy_icon.png')

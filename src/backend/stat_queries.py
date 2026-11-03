@@ -78,3 +78,19 @@ FROM public.game_analytics g
 JOIN public.player_profiles p ON g.username = p.username
 ORDER BY g.game, g.score DESC;
 """
+# --- STUDENT LEVEL QUERIES (the logged-in player only) ---
+
+# 6. Personal stats per game: rounds, best, average, total time, last played
+SQL_PLAYER_GAME_STATS = """
+SELECT
+    g.game,
+    COUNT(*) as rounds_played,
+    MAX(g.score) as top_score,
+    AVG(g.score) as avg_score,
+    SUM(g.time_played) as total_time_seconds,
+    MAX(g.played_at) as last_played
+FROM public.game_analytics g
+WHERE g.username = %s
+GROUP BY g.game
+ORDER BY g.game ASC;
+"""

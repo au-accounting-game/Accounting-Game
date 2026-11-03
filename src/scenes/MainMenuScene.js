@@ -30,6 +30,11 @@ export class MainMenuScene extends Scene {
   create() {
     const { width, height } = this.scale;
 
+    // SSO only works on the deployed site, so skip the sign-in overlay locally
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      sessionStorage.setItem('sso_completed', 'true');
+    }
+
     // --- Restore global SFX/music volume BEFORE any sound plays ---
     const vol = this._readSavedVolume();
     this.game.sfxVolume = vol;
@@ -125,28 +130,87 @@ export class MainMenuScene extends Scene {
       return button;
     };
 
-    const totalButtons = options.length;
+    const onOptionSelected = (option) => {
+      this.game.musicManager?.stop();
 
-    // controls menu spacing and placement
-    const spacing = 65;
-    const blockHeight = (totalButtons - 1) * spacing;
-    const startY = height / 2 - blockHeight / 2 + 50;
+      if (option.scene) {
+        this.startGameMode3(option.scene);
+      } else {
+        this.startGame(option);
+      }
+    };
 
-    options.forEach((option, index) => {
-      createButton(
-        width / 2,
-        startY + index * spacing,
-        option.label,
-        () => {
-          this.game.musicManager?.stop();
+    // stack buttons vertically, centered a little below the middle
+    const layoutButtons = (items, spacing = 65) => {
+      const blockHeight = (items.length - 1) * spacing;
+      const startY = height / 2 - blockHeight / 2 + 50;
 
-          if (option.scene) {
-            this.startGameMode3(option.scene);
-          } else {
-            this.startGame(option);
-          }
-        }
-      );
+      items.forEach((item, index) => {
+        createButton(width / 2, startY + index * spacing, item.label, item.onClick ?? (() => onOptionSelected(item)));
+      });
+    };
+
+    // default menu (everyone except ACCT 2110)
+    const showDefaultMenu = () => layoutButtons(options);
+
+    // ACCT 2110 menu: Effect of Transactions opens EffectsSelect (with or
+    // without Net Income), then Balance, Debit/Credit, 5 Elements
+    const show2110Menu = () => layoutButtons([
+      { label: "Effect of Transactions", onClick: () => this.scene.start("EffectsSelect") },
+      { label: "Balance the Accounting Equation", scene: "GM3Level1" },
+      { label: "Debit/Credit", type: "debit_credit" },
+      { label: "5 Elements", type: "accounting" },
+    ]);
+
+    // pick the menu from the logged-in user's sections. With no logged-in
+    // user (local dev, no session) the class chosen in Settings is used.
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const apiBase = isLocal ? "http://localhost:8000" : "https://accounting-game.cse.eng.auburn.edu/api";
+
+    // local testing only: ?section=2026F_ACCT2110_001 fakes the user's sections
+    const testSections = isLocal ? new URLSearchParams(window.location.search).get("section") : null;
+
+    const userPromise = testSections
+      ? Promise.resolve({ userid: "local-test", sections: testSections })
+      : fetch(`${apiBase}/fetch-user`)
+          .then(res => res.json())
+          .catch(err => {
+            console.error("Failed to fetch user sections for main menu", err);
+            return {};
+          });
+
+    userPromise.then(user => {
+      // scene may have been left while the fetch was in flight
+      if (!this.sys.isActive()) return;
+
+      // Settings only offers the class picker when nobody is logged in
+      const loggedIn = user?.userid != null;
+      this.registry.set("loggedIn", loggedIn);
+
+      // the menu unlocks only once the server confirms a login session;
+      // otherwise ask the player to sign in (not locally - SSO is server-only)
+      if (loggedIn) {
+        sessionStorage.setItem('sso_completed', 'true');
+      } else if (!isLocal) {
+        sessionStorage.removeItem('sso_completed'); // session expired
+        createSSOOverlay();
+      }
+
+      // "2026F_ACCT2110_001,2026S_ACCT5110_002" -> ["ACCT 2110", "ACCT 5110"]
+      const sections = String(user?.sections ?? "");
+      let classes = [...new Set(
+        [...sections.toUpperCase().matchAll(/ACCT(\d{4})/g)].map(m => `ACCT ${m[1]}`)
+      )];
+      if (!loggedIn) {
+        const picked = localStorage.getItem("class_view");
+        classes = picked ? [picked] : [];
+      }
+
+      // games pick their course's worksheets from this (MainScene.termSource)
+      this.registry.set("courses", classes);
+
+      if (classes.includes("ACCT 2110")) show2110Menu();
+      else showDefaultMenu();
     });
 
     // ***** ICONS *****
@@ -266,13 +330,9 @@ export class MainMenuScene extends Scene {
       document.body.appendChild(overlay);
 
       modal.querySelector('#sso-submit-trigger').onclick = () => {
-          sessionStorage.setItem('sso_completed', 'true');
           window.location.href = "https://accounting-game.cse.eng.auburn.edu/saml/login";
       };
     };
-
-    // CALL THE OVERLAY
-    this.time.delayedCall(1000, createSSOOverlay);
   }
 
   // OLD VOLUME SLIDER CODE, MAY REUSE

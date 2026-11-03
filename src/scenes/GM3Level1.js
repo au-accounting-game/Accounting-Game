@@ -35,7 +35,7 @@ export default class GM3Level1 extends BaseGM3Scene {
 
     const startTime = this.registry.get('levelStartTime') || Date.now();
     const timeSpentPlaying = Math.floor((Date.now() - startTime) / 1000);
-    this.scene.start("GameOverScene", {
+    this._endToGameOver({
         score: this.score,
         mode: "GM3-Level1",
         reason,
@@ -186,14 +186,6 @@ export default class GM3Level1 extends BaseGM3Scene {
       repeat: -1
     });
 
-    // Floating "+100" Animation Text
-    this.plusTextAnchor = { x: width / 2, y: height * 0.51 };
-    this.plusText = this.add.text(this.plusTextAnchor.x, this.plusTextAnchor.y, "+100", {
-      fontSize: "48px",
-      color: "#dcc89f",
-      fontFamily: '"Jersey 10", sans-serif',
-    }).setOrigin(0.5).setDepth(15).setStroke("#7f1a02", 3).setAlpha(0);
-
 
 
     // --- NEW UI LIST ---
@@ -252,16 +244,19 @@ export default class GM3Level1 extends BaseGM3Scene {
     if (this.currentInput === item.correctAnswer) {
       this.onScored(100);
       this._updateScoreUI();
-      this._showPlus100();
       this.inputBox.setStrokeStyle(4, 0x2e7d32); // Turn box border green
-      this.feedbackText.setText("Correct!").setColor("#2e7d32").setAlpha(1);
+      this._popResult(this.feedbackText, true, "Correct! +100");
     } else {
       this.inputBox.setStrokeStyle(4, 0x8b0000); // Turn box border red
-      this.feedbackText.setText(`Incorrect!\nCorrect answer: ${item.correctAnswer}`).setColor("#ec1b1b").setAlpha(1);
+      this._popResult(this.feedbackText, false, `Incorrect!\nCorrect answer: ${item.correctAnswer}`);
+      this._recordMiss(item.question, [
+        { label: "Answer", correct: `$${item.correctAnswer}`, yours: `$${this.currentInput}` },
+      ]);
     }
 
     // Delay so they can read the feedback, then automatically advance to next question
-    this.time.delayedCall(1500, () => {
+    // a miss stays up longer so the correct answer can be read
+    this.time.delayedCall(this.currentInput === item.correctAnswer ? 1200 : 2000, () => {
       this.currentIndex++;
       this._showCurrent(true);
     });
@@ -442,12 +437,6 @@ export default class GM3Level1 extends BaseGM3Scene {
 }
   _updateScoreUI() { if (this.scoreText) this.scoreText.setText(`POINTS: ${this._formatScore(this.score)}`); }
   _updateTimerUI() { if (this.timerText) this.timerText.setText(`Time: ${this.timeLeft | 0}s`); }
-  _showPlus100() {
-    const t = this.plusText; if (!t) return;
-    t.setText("+100"); t.setPosition(this.plusTextAnchor.x, this.plusTextAnchor.y);
-    t.setAlpha(1).setScale(1); this.tweens.killTweensOf(t);
-    this.tweens.add({ targets: t, y: this.plusTextAnchor.y - 30, alpha: 0, scale: 1.15, duration: 650, ease: "Quad.easeOut" });
-  }
 
   _failAndBack(msg) {
     const { width, height } = this.scale;

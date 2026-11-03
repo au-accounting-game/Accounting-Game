@@ -1,6 +1,14 @@
 // src/scenes/BaseGM3Scene.js
 import Phaser from "phaser";
 
+// selector keys -> what the player sees (Effect of Transactions, Accounting Errors)
+export const ELEMENT_NAMES = {
+  Asset: "Assets",
+  Liability: "Liabilities",
+  SE: "Stockholders Equity",
+  NI: "Net Income",
+};
+
 export default class BaseGM3Scene extends Phaser.Scene {
   /**
    * @param {string} key
@@ -18,6 +26,7 @@ export default class BaseGM3Scene extends Phaser.Scene {
   }
 
   init() {
+    this.missed = []; // wrong answers, shown on ReviewScene at the end
     this.score = 0;
     this.correctAnswers = 0;
     this.totalAttempts = 0;
@@ -106,6 +115,43 @@ recordAnswer(isCorrect) {
     );
 }
     
+  // pop a result message (white for correct, red for incorrect): bounces in, short hold, then
+  // fades - fits inside the 1.2s before the next question
+  _popResult(text, correct, message) {
+    text.setText(message)
+      .setColor(correct ? "#ffffff" : "#e57373")
+      .setStroke(correct ? "#2e7d32" : "#7f0000", 5)
+      .setAlpha(1)
+      .setScale(0.4);
+    this.tweens.killTweensOf(text);
+    this.tweens.add({ targets: text, scale: 1, duration: 450, ease: "Bounce.easeOut" });
+    this.tweens.add({ targets: text, alpha: 0, duration: 250, delay: 850 });
+  }
+
+  // after a wrong answer: show the correct value in every selector box,
+  // outlining the ones the player had right in green and wrong in red
+  _revealCorrect(selected, correct, labelOf) {
+    this.selectors.forEach(s => {
+      s.valueText.setText(labelOf(correct[s.key]));
+      s.rect.setStrokeStyle(4, selected[s.key] === correct[s.key] ? 0x2e7d32 : 0x8b0000);
+    });
+  }
+
+  _resetSelectorOutlines() {
+    this.selectors?.forEach(s => s.rect.setStrokeStyle(3, 0x7f1a02));
+  }
+
+  // remember a missed question for the end-of-game review;
+  // rows: [{ label, correct, yours }]
+  _recordMiss(question, rows) {
+    this.missed.push({ question, rows });
+  }
+
+  // end of game: Game Over gets the missed questions so it can offer a review
+  _endToGameOver(gameOverData) {
+    this.scene.start("GameOverScene", { ...gameOverData, missed: this.missed });
+  }
+
   onTimeUp() {
     this.endLevel(false);
   }

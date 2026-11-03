@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import BaseGM3Scene from "./BaseGM3Scene";
+import BaseGM3Scene, { ELEMENT_NAMES } from "./BaseGM3Scene";
 import { orderByRecency, markSeen } from "../gameobjects/QuestionHistory";
 
 export default class GM3Level3 extends BaseGM3Scene {
@@ -26,7 +26,7 @@ export default class GM3Level3 extends BaseGM3Scene {
             markSeen(this.apiBase, "hard", this.questions.slice(0, this.currentIndex + 1));
         }
 
-        this.scene.start("GameOverScene", {
+        this._endToGameOver({
             score: this.score,
             mode: "GM3-Level3",
             reason,
@@ -460,7 +460,7 @@ export default class GM3Level3 extends BaseGM3Scene {
         card.add(g);
 
         const message =
-            "What is the effect on the financial statement elements?\nClick on up and down arrows or element boxes to select Overstated, Understated, or No Effect.";
+            "What is the effect on the financial statement elements (assets, liabilities, shareholders equity, revenues, and expenses)?\nClick on up and down arrows or element boxes to select Overstated, Understated, or No Effect.";
         const title = this.add
             .text(0, -40, message, {
                 fontSize: "34px",
@@ -471,6 +471,8 @@ export default class GM3Level3 extends BaseGM3Scene {
                 wordWrap: { width: panelW - 48, useAdvanced: true },
             })
             .setOrigin(0.5);
+        // shrink long instructions so they stay above the Start button
+        for (let size = 34; title.height > 150 && size > 20; size--) title.setFontSize(size);
         card.add(title);
 
         const btnW = 240,
@@ -555,6 +557,7 @@ export default class GM3Level3 extends BaseGM3Scene {
         this.selectors.forEach((s) =>
             s.valueText.setText("No Effect")
         );
+        this._resetSelectorOutlines();
 
         if (show) this._setGameplayUIVisible(true);
     }
@@ -589,19 +592,32 @@ this.recordAnswer(allMatch);
         if (allMatch) {
             this.onScored(300);
             this._updateScoreUI();
-            this._showPlusAmount(300);
+            this._showResult(true, 300);
             this._flashScreen(0x2e7d32, 0.35);
             if (nextBtn) nextBtn.setFillStyle(0x2e7d32);
         } else {
+            this._showResult(false);
             this._flashScreen(0x8b0000, 0.35);
             if (nextBtn) nextBtn.setFillStyle(0x8b0000);
+
+            const labelOf = (v) => ({ O: "Overstated", U: "Understated" })[v] ?? "No Effect";
+            this._revealCorrect(sel, cor, labelOf);
+            this._recordMiss(
+                item.question ?? String(item),
+                this.selectors.map((s) => ({
+                    label: ELEMENT_NAMES[s.key],
+                    correct: labelOf(cor[s.key]),
+                    yours: labelOf(sel[s.key]),
+                }))
+            );
         }
 
         if (nextBtn)
             this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
         this.input.enabled = false;
-        this.time.delayedCall(1400, () => {
+        // a miss stays up longer so the correct answers can be read
+        this.time.delayedCall(allMatch ? 1200 : 2000, () => {
             this.currentIndex++;
             this._showCurrent(true);
             this.input.enabled = true;
@@ -616,7 +632,7 @@ this.recordAnswer(allMatch);
         this.tweens.add({
             targets: overlay,
             alpha: maxAlpha,
-            duration: 700,
+            duration: 600, // in and back out: 1.2s of feedback
             yoyo: true,
             ease: "Quad.easeOut",
             onComplete: () => overlay.destroy(),
@@ -709,21 +725,9 @@ this.recordAnswer(allMatch);
         if (this.timerText)
             this.timerText.setText(`Time: ${this.timeLeft | 0}s`);
     }
-    _showPlusAmount(amount = 300) {
-        const t = this.plusText;
-        if (!t) return;
-        t.setText(`+${amount}`);
-        t.setPosition(this.plusTextAnchor.x, this.plusTextAnchor.y);
-        t.setAlpha(1).setScale(1);
-        this.tweens.killTweensOf(t);
-        this.tweens.add({
-            targets: t,
-            y: this.plusTextAnchor.y - 30,
-            alpha: 0,
-            scale: 1.15,
-            duration: 650,
-            ease: "Quad.easeOut",
-        });
+    // "Correct! +300" or "Incorrect"
+    _showResult(correct, amount = 300) {
+        if (this.plusText) this._popResult(this.plusText, correct, correct ? `Correct! +${amount}` : "Incorrect");
     }
 
     _failAndBack(msg) {

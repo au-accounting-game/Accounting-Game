@@ -39,7 +39,7 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
-ALLOWED_GAMES = {"game1", "game2", "game3-1", "game3-2", "game3-3"}
+ALLOWED_GAMES = {"game1", "game2", "game3-1", "game3-2", "game3-3", "game3-4"}
 TOP_N = 100
 
 GAME_ALIASES = {
@@ -47,7 +47,8 @@ GAME_ALIASES = {
     "game2": "game2",
     "gm3-level1": "game3-1",
     "gm3-level2": "game3-2",
-    "gm3-level3": "game3-3"
+    "gm3-level3": "game3-3",
+    "gm3-effects": "game3-4"  # Effect of Transactions without Net Income (CC + RE)
 }
  
 @asynccontextmanager
@@ -628,6 +629,38 @@ def get_section_report(section_id: str):
                     for r in time_spent
                 ]
             }
+    finally:
+        pool.putconn(conn)
+
+# student view: the logged-in player's own stats (Settings -> My Stats)
+@app.get("/stats/me")
+def get_my_stats(request: Request):
+    username = request.session.get('userid')
+    if not username:
+        # no session (logged out, or local dev without SSO)
+        return {"logged_in": False, "games": []}
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB not initialized")
+
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            # scores are stored under the lowercased username (see /submit)
+            cur.execute(SQL_PLAYER_GAME_STATS, (username.lower(),))
+            rows = cur.fetchall()
+        return {
+            "logged_in": True,
+            "games": [
+                {
+                    "game": r[0],
+                    "rounds": r[1],
+                    "top": r[2],
+                    "avg": float(r[3]) if r[3] is not None else 0.0,
+                    "seconds": r[4] or 0,
+                    "last_played": r[5].isoformat() if r[5] else None,
+                } for r in rows
+            ],
+        }
     finally:
         pool.putconn(conn)
 

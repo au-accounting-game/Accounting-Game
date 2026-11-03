@@ -12,6 +12,7 @@ export class GameOverScene extends Scene {
     this.end_points = (data && (data.points ?? data.score)) || 0;
     this.gameKey = (data && (data.gameKey ?? data.mode)) || "MainScene";
     this.isTutorial = data?.isTutorial ?? false; // tutorial?
+    this.missed = data?.missed ?? []; // Accounting Equation misses, for the Review button
 
     // PULL FROM REGISTRY INSTEAD
     const startTime = this.registry.get('levelStartTime');
@@ -32,6 +33,7 @@ export class GameOverScene extends Scene {
     const key = String(this.gameKey || "");
     if (key === "GM3Level1" || key === "GM3-Level1") return "GM3Level1";
     if (key === "GM3Level2" || key === "GM3-Level2") return "GM3Level2";
+    if (key === "GM3Effects" || key === "GM3-Effects") return "GM3Effects";
     if (key === "GM3Level3" || key === "GM3-Level3") return "GM3Level3";
     return "MainScene";
   }
@@ -77,7 +79,7 @@ export class GameOverScene extends Scene {
     };
 
     const restartScene = this._resolveRestartScene();
-    const preferGM3 = restartScene.startsWith("GM3Level");
+    const preferGM3 = restartScene.startsWith("GM3");
     const desiredBgKey = preferGM3 ? "gm3_shared_bg" : "gameover_bg";
 
     let bgKey = desiredBgKey;
@@ -160,9 +162,24 @@ export class GameOverScene extends Scene {
       onUpdate: (tw) => scoreText.setText(String(Math.floor(tw.getValue()))),
     });
 
+    // buttons first, so a slow or failed user lookup can't leave the screen without them
+    this.createMenuButtons(centerX, centerY + panelH / 2 - 40);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this._resumeKeys());
+
     //const savedUsername = localStorage.getItem("game_username");
-    const response = await fetch("https://accounting-game.cse.eng.auburn.edu/api/fetch-user");
-    const savedUsername = await response.json().then(data => data.userid);
+    // the lookup can fail or hang (local dev, off campus, expired session);
+    // give up after 5s and fall back to manual submission
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const apiBase = isLocal ? "http://localhost:8000" : "https://accounting-game.cse.eng.auburn.edu/api";
+    let savedUsername = null;
+    try {
+      const response = await fetch(`${apiBase}/fetch-user`, { signal: AbortSignal.timeout(5000) });
+      savedUsername = (await response.json()).userid;
+    } catch (err) {
+      console.error("Failed to fetch user for score submission", err);
+    }
+    // left the screen while waiting (paused under the review overlay still counts as here)
+    if (!this.sys.isActive() && !this.sys.isPaused()) return;
 
     // block manual submission if tutorial
     if (this.isTutorial) {
@@ -172,9 +189,6 @@ export class GameOverScene extends Scene {
     } else {
         this.showQualificationUI(centerX, centerY + 52);
     }
-
-    this.createMenuButtons(centerX, centerY + panelH / 2 - 40);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this._resumeKeys());
   }
 
   _line(cx, cy, msg, tintHex) {
@@ -298,6 +312,7 @@ export class GameOverScene extends Scene {
         gameKey: this.gameKey,
         highlightName: savedUsername.substring(0, 3).toUpperCase(),
         playAgainScene: this._resolveRestartScene(),
+        missed: this.missed,
     });
 });
 
@@ -395,6 +410,7 @@ export class GameOverScene extends Scene {
         gameKey: this.gameKey,
         highlightName: username,
         playAgainScene: this._resolveRestartScene(),
+        missed: this.missed,
     });
 });
       } catch (err) {
@@ -439,6 +455,14 @@ export class GameOverScene extends Scene {
       const restartScene = this._resolveRestartScene();
       this.scene.start(restartScene);
     });
+
+    // only after an Accounting Equation game with misses
+    if (this.missed.length) {
+      this._makeBrownButton(centerX, baseY, "Review", () => {
+        this.scene.pause();
+        this.scene.launch("ReviewScene", { missed: this.missed, returnTo: this.scene.key });
+      });
+    }
 
     this._makeBrownButton(centerX + gap / 2, baseY, "Main Menu", () => {
       this._resumeKeys();

@@ -1,17 +1,29 @@
 import * as XLSX from "xlsx";
-import BaseGM3Scene from "./BaseGM3Scene";
+import BaseGM3Scene, { ELEMENT_NAMES } from "./BaseGM3Scene";
 import { orderByRecency, markSeen } from "../gameobjects/QuestionHistory";
 
+// Two variants of the Effect of Transactions game share this scene:
+// - withNetIncome: true  -> A = L + SE | Net Income   (scene "GM3Level2", leaderboard "game3-2")
+// - withNetIncome: false -> A = L + SE                (scene "GM3Effects", leaderboard "game3-4")
 export default class GM3Level2 extends BaseGM3Scene {
-  constructor() {
-    super("GM3Level2", { title: "", level: 2, timeLimit: 90 });
+  constructor(key = "GM3Level2", { withNetIncome = true } = {}) {
+    super(key, { title: "", level: 2, timeLimit: 90 });
+    this.withNetIncome = withNetIncome;
+    this.modeName = withNetIncome ? "GM3-Level2" : "GM3-Effects";
+    this.answerKeys = withNetIncome
+      ? ["Asset", "Liability", "SE", "NI"]
+      : ["Asset", "Liability", "SE"];
     this.currentIndex = 0;
     this.questions = [];
     this._uiNodes = [];
     this.selectors = [];
     // Default all selections to "No Effect"
-    this.selections = { Asset: "No Effect", Liability: "No Effect", SE: "No Effect", NI: "No Effect" };
+    this.selections = this._blankSelections();
     this.score = 0; // show as POINTS: 0000
+  }
+
+  _blankSelections() {
+    return Object.fromEntries(this.answerKeys.map(k => [k, "No Effect"]));
   }
 
   onTimeUp() { this._finishToGameOver("timeup"); }
@@ -25,7 +37,7 @@ export default class GM3Level2 extends BaseGM3Scene {
       markSeen(this.apiBase, "medium", this.questions.slice(0, this.currentIndex + 1));
     }
 
-    this.scene.start("GameOverScene", { score: this.score, mode: "GM3-Level2", reason,
+    this._endToGameOver({ score: this.score, mode: this.modeName, reason,
       timeSpentPlaying: Math.floor((this.time.now - this.startTime) / 1000),
      });
   }
@@ -70,7 +82,10 @@ export default class GM3Level2 extends BaseGM3Scene {
 
         if (!q) continue;
 
-        rows.push({ question: q, correct: { Asset: asset, Liability: liab, SE: se, NI: ni } });
+        const correct = this.withNetIncome
+          ? { Asset: asset, Liability: liab, SE: se, NI: ni }
+          : { Asset: asset, Liability: liab, SE: se };
+        rows.push({ question: q, correct });
       }
 
       if (!rows.length) return this._failAndBack("No valid questions found in the sheet.");
@@ -163,16 +178,26 @@ export default class GM3Level2 extends BaseGM3Scene {
     const eq      = this.add.text(lblAsset.x + lblAsset.width + 20, EQ_Y, "=", symbolStyle).setOrigin(0, 0.5).setDepth(6);
     const lblLiab = this.add.text(eq.x + 26, EQ_Y, "Liability", labelStyle).setOrigin(0, 0.5).setDepth(6);
     const plus    = this.add.text(lblLiab.x + lblLiab.width + 14, EQ_Y, "+", symbolStyle).setOrigin(0, 0.5).setDepth(6);
-    const lblSE   = this.add.text(plus.x + 20, EQ_Y, "Stockholders Equity", labelStyle).setOrigin(0, 0.5).setDepth(6);
-    const pipe    = this.add.text(lblSE.x + lblSE.width + 36, EQ_Y, "|", symbolStyle).setOrigin(0, 0.5).setDepth(6);
-    const lblNI   = this.add.text(pipe.x + 22, EQ_Y, "Net Income", labelStyle).setOrigin(0, 0.5).setDepth(6);
+
+    // equation labels, and the label each selector sits under (by answer key)
+    const lblSE = this.add.text(plus.x + 20, EQ_Y, "Stockholders Equity", labelStyle).setOrigin(0, 0.5).setDepth(6);
+    const eqNodes = [lblAsset, eq, lblLiab, plus, lblSE];
+    const answerLabels = { Asset: lblAsset, Liability: lblLiab, SE: lblSE };
+
+    if (this.withNetIncome) {
+      const pipe  = this.add.text(lblSE.x + lblSE.width + 36, EQ_Y, "|", symbolStyle).setOrigin(0, 0.5).setDepth(6);
+      const lblNI = this.add.text(pipe.x + 22, EQ_Y, "Net Income", labelStyle).setOrigin(0, 0.5).setDepth(6);
+      eqNodes.push(pipe, lblNI);
+      answerLabels.NI = lblNI;
+    } else {
+      // no Net Income column, so the equation is narrower - center it
+      const shift = (width - (lblSE.x + lblSE.width - leftX)) / 2 - leftX;
+      eqNodes.forEach(n => { n.x += shift; });
+    }
 
     // Selector geometry
     const boxW = 150, boxH = 52;
-    const assetCenter = lblAsset.x + lblAsset.width / 2;
-    const liabCenter  = lblLiab.x + lblLiab.width / 2;
-    const seCenter    = lblSE.x + lblSE.width / 2;
-    const niCenter    = lblNI.x + lblNI.width / 2;
+    const centerOf = (lbl) => lbl.x + lbl.width / 2;
 
     const arrowBase = 42, arrowHeight = 28, ARROW_V_OFFSET = 14;
     const makeArrowPolygon = (base, heightPx, direction) => {
@@ -250,12 +275,7 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     };
 
     // Build selectors
-    this.selectors = [
-      makeSelector(assetCenter, "Asset"),
-      makeSelector(liabCenter,  "Liability"),
-      makeSelector(seCenter,    "SE"),
-      makeSelector(niCenter,    "NI"),
-    ];
+    this.selectors = this.answerKeys.map(key => makeSelector(centerOf(answerLabels[key]), key));
 
     // Submit button
     const nextY = selY + 100;
@@ -278,14 +298,14 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
 
     // Hide gameplay UI until start
     this._uiNodes = [
-    this.qText,
-    this.timerText,
-    this.scoreText,
-    this.questionCounterText,
-    lblAsset, eq, lblLiab, plus, lblSE, pipe, lblNI,
-    ...this.selectors.map(s => s.container),
-    nextBtn, nextTxt,
-];
+      this.qText,
+      this.timerText,
+      this.scoreText,
+      this.questionCounterText,
+      ...eqNodes,
+      ...this.selectors.map(s => s.container),
+      nextBtn, nextTxt,
+    ];
     this._setGameplayUIVisible(false);
 
     // Kickoff
@@ -327,7 +347,9 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     g.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 18);
     card.add(g);
 
-    const message = "What is the effect on the financial statement elements?\nClick on up and down arrows or element boxes to indicate change.";
+    const message = this.withNetIncome
+      ? "What is the effect on the financial statement elements (Assets, Liabilities, Stockholders Equity, Revenues, and Expenses)?\nRevenues minus Expenses equals Net Income.\nClick on the up and down arrows or element boxes to indicate change."
+      : "What is the effect on the Balance Sheet Elements (Assets, Liabilities, and Stockholders Equity)?\nClick on the up and down arrows or element boxes to indicate change.";
     const title = this.add.text(0, -40, message, {
       fontSize: "34px",
       color: "#7f1a02",
@@ -336,6 +358,8 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
       lineSpacing: 6,
       wordWrap: { width: panelW - 48, useAdvanced: true },
     }).setOrigin(0.5);
+    // shrink long instructions so they stay above the Start button
+    for (let size = 34; title.height > 150 && size > 20; size--) title.setFontSize(size);
     card.add(title);
 
     // Start button
@@ -396,12 +420,14 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     this.qText.setText(q);
 
     // Reset selectors to "No Effect" each question
-    this.selections = { Asset: "No Effect", Liability: "No Effect", SE: "No Effect", NI: "No Effect" };
-this.selectors.forEach(s => s.valueText.setText(
-    this.selections[s.key] === "+" ? "Increase" :
-    this.selections[s.key] === "-" ? "Decrease" :
-    "No Effect"
-));
+    this.selections = this._blankSelections();
+    this.selectors.forEach(s => s.valueText.setText(
+      this.selections[s.key] === "+" ? "Increase" :
+      this.selections[s.key] === "-" ? "Decrease" :
+      "No Effect"
+    ));
+    this._resetSelectorOutlines();
+
     if (show) this._setGameplayUIVisible(true);
   }
 
@@ -410,32 +436,36 @@ this.selectors.forEach(s => s.valueText.setText(
     if (!item) return;
 
     const sel = this.selections;
-    const cor = item.correct ?? { Asset: "No Effect", Liability: "No Effect", SE: "No Effect", NI: "No Effect" };
+    const cor = item.correct ?? this._blankSelections();
 
-    const allMatch =
-      sel.Asset === cor.Asset &&
-      sel.Liability === cor.Liability &&
-      sel.SE === cor.SE &&
-      sel.NI === cor.NI;
-this.recordAnswer(allMatch);
-      
+    const allMatch = this.answerKeys.every(k => sel[k] === cor[k]);
+    this.recordAnswer(allMatch);
+
     const nextBtn = this._uiNodes.find(n => n && n.type === "Rectangle" && n.width === 180 && n.height === 50);
 
     if (allMatch) {
       this.onScored(200);
       this._updateScoreUI();
-      this._showPlusAmount(200);
+      this._showResult(true, 200);
       this._flashScreen(0x2e7d32, 0.35);
       if (nextBtn) nextBtn.setFillStyle(0x2e7d32);
     } else {
+      this._showResult(false);
       this._flashScreen(0x8b0000, 0.35);
       if (nextBtn) nextBtn.setFillStyle(0x8b0000);
+
+      const labelOf = v => v === "+" ? "Increase" : v === "-" ? "Decrease" : "No Effect";
+      this._revealCorrect(sel, cor, labelOf);
+      this._recordMiss(item.question ?? String(item), this.answerKeys.map(k => ({
+        label: ELEMENT_NAMES[k], correct: labelOf(cor[k]), yours: labelOf(sel[k]),
+      })));
     }
 
     if (nextBtn) this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
     this.input.enabled = false;
-    this.time.delayedCall(1400, () => {
+    // a miss stays up longer so the correct answers can be read
+    this.time.delayedCall(allMatch ? 1200 : 2000, () => {
       this.currentIndex++;
       this._showCurrent(true);
       this.input.enabled = true;
@@ -448,7 +478,7 @@ this.recordAnswer(allMatch);
     this.tweens.add({
       targets: overlay,
       alpha: maxAlpha,
-      duration: 700,
+      duration: 600, // in and back out: 1.2s of feedback
       yoyo: true,
       ease: "Quad.easeOut",
       onComplete: () => overlay.destroy(),
@@ -517,13 +547,9 @@ this.recordAnswer(allMatch);
     if (this.timerText)
       this.timerText.setText(`Time: ${this.timeLeft | 0}s`);
   }
-  _showPlusAmount(amount = 200) {
-    const t = this.plusText; if (!t) return;
-    t.setText(`+${amount}`);
-    t.setPosition(this.plusTextAnchor.x, this.plusTextAnchor.y);
-    t.setAlpha(1).setScale(1);
-    this.tweens.killTweensOf(t);
-    this.tweens.add({ targets: t, y: this.plusTextAnchor.y - 30, alpha: 0, scale: 1.15, duration: 650, ease: "Quad.easeOut" });
+  // "Correct! +200" or "Incorrect"
+  _showResult(correct, amount = 200) {
+    if (this.plusText) this._popResult(this.plusText, correct, correct ? `Correct! +${amount}` : "Incorrect");
   }
 
   _failAndBack(msg) {

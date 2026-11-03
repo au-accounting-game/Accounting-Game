@@ -9,15 +9,19 @@ import { SplashScene } from "./scenes/SplashScene";
 import { MainMenuScene } from "./scenes/MainMenuScene";
 import { PauseScene } from "./scenes/PauseScene";
 import { SettingsScene } from "./scenes/SettingScene";
+import { StatsScene } from "./scenes/StatsScene";
+import { ReviewScene } from "./scenes/ReviewScene";
 import { Leaderboard } from "./scenes/leaderboard";
 import MusicManager from "./gameobjects/MusicManager";
 
 // Added: speed selection for GM 1 and 2
 import { SpeedSelect } from "./scenes/SpeedSelect";
+import { EffectsSelect } from "./scenes/EffectsSelect";
 
 // NEW: GameMode 3 (3 levels)
 import GM3Level1 from "./scenes/GM3Level1";
 import GM3Level2 from "./scenes/GM3Level2";
+import GM3Effects from "./scenes/GM3Effects";
 import GM3Level3 from "./scenes/GM3Level3";
 import GM3PauseScene from "./scenes/GM3PauseScene";
 
@@ -63,14 +67,18 @@ const config = {
     GameOverScene,
     MainMenuScene,
     //NEW speed select
-    SpeedSelect,  
+    SpeedSelect,
+    EffectsSelect,  
     PauseScene,
     SettingsScene,
+    StatsScene,
+    ReviewScene,
     // Removed: EquationScene,
     // New third gamemode scenes:
     // Removed: GM3LevelSelect,
     GM3Level1,
     GM3Level2,
+    GM3Effects,
     GM3Level3,
     GM3PauseScene,
     Leaderboard,

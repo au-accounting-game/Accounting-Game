@@ -23,175 +23,80 @@ const DESCRIPTION_MAP = new Map([
     [ASSETS, "A present right of an entity to an economic benefit."],
     [
         LIABILITIES,
-        "A present obligation that requires an entity to transferor otherwise provide economic benefits to others.",
+        "A present obligation that requires an entity to transfer or otherwise provide economic benefits to others.",
     ],
     [
         STOCKHOLDERS_EQUITY,
-        "The residual interest in the assets of anentity that remains after deducting its liabilities.",
+        "The residual interest in the assets of an entity that remains after deducting its liabilities.",
     ],
     [
         EXPENSES,
-        "Expenses are outflows or other using up of assets of anentity or incurrences of its liabilities (or a combination of both) from delivering orproducing goods, rendering services, or carrying out other activities",
+        "Expenses are outflows or other using up of assets of an entity or incurrences of its liabilities (or a combination of both) from delivering or producing goods, rendering services, or carrying out other activities.",
     ],
     [
         REVENUES,
-        "Inflows or other enhancements of assets of an entityor settlements of its liabilities (or a combination of both) from delivering orproducing goods, rendering services, or carrying out other activities",
+        "Inflows or other enhancements of assets of an entity or settlements of its liabilities (or a combination of both) from delivering or producing goods, rendering services, or carrying out other activities.",
     ],
 ]);
-const POINTS_200 = new Set([
-    "Accrued Interest",
-    "Accrued Rent",
-    "Accrued Salaries",
-    "Accrued Utilities",
-    "Accumulated Depletion",
-    "Accumulated Depreciation",
-    "Accumulated Profits",
-    "Additional Paid in Capital - Common Stock",
-    "Additional Paid in Capital - Preferred Stock",
-    "Additional Paid in Capital - Treasury Stock",
-    "Advertising Revenue",
-    "Advertising Earnings",
-    "Allowance for Doubtful Accounts",
-    "Amortization Expense",
-    "Amortization Costs",
-    "Artist Fee Expense",
-    "Artist Fees",
-    "Attorney Fees",
-    "Bad Debt Expense",
-    "Bad Debts",
-    "Checking Accounts",
-    "Commissions Expense",
-    "Commissions Costs",
-    "Commissions Payable",
-    "Computer Hardware",
-    "Consulting Expense",
-    "Consulting Fees",
-    "Copyright",
-    "Cost of Goods Sold",
-    "Cost of Sales",
-    "Customer Lists",
-    "Customer Deposits",
-    "Customer Refunds Payable",
-    "Delivery Expense",
-    "Delivery Fees",
-    "Depreciation Expense",
-    "Depreciation Costs",
-    "Dividends Payable",
-    "Equipment Rental Expense",
-    "Equipment Rental Fees",
-    "Finished Goods Inventory",
-    "Franchise",
-    "Income Taxes Expense",
-    "Income Taxes Costs",
-    "Income Taxes Payable",
-    "IT Expense",
-    "IT Costs",
-    "License Fees and Taxes Expense",
-    "License Fees and Taxes",
-    "Loss on Disposal of Property,Plant, & Equipment",
-    "Loss on Sale of Intangibles",
-    "Loss on Sale of Investments",
-    "Medicare Taxes Expense",
-    "Medicare Taxes Cost",
-    "Medicare Taxes Payable",
-    "Money Market Accounts",
-    "Office Rent Expense",
-    "Office Rent Fees",
-    "Penalties and Fines Expense",
-    "Penalties and Fines",
-    "Petty Cash",
-    "Property Taxes Expense",
-    "Property Tax Fees",
-    "Promotional Materials Expense",
-    "Raw Materials Inventory",
-    "Rent Expense",
-    "Rent Fees",
-    "Royalties Expense",
-    "Royalties Paid",
-    "Sales Discounts",
-    "Sales Returns and Allowances",
-    "Savings Accounts",
-    "Security Services Expense",
-    "Security Services Costs",
-    "Service Charge Expense",
-    "Service Charges",
-    "Service Equipment",
-    "Short-Term Bonds Receivable",
-    "Social Security Taxes Expense",
-    "Social Security Taxes Paid",
-    "Social Security Taxes Payable",
-    "Software Subscription Expense",
-    "Software Subscription Costs",
-    "Supplies Inventory",
-    "Trade Show Expense",
-    "Trade Show Costs",
-    "Trademark",
-    "Training Expense",
-    "Training Costs",
-    "Treasury Stock",
-    "Unemployment Taxes Expense",
-    "Unemployment Taxes Costs",
-    "Unemployment Taxes Payable",
-    "Wages Payable",
-    "Warranty Liability",
-    "Dividends Payable",
-    "Membership & Subscription Revenue",
-    "Preferred Stock",
-    "Gain on Disposal of Property, Plant, & Equipment",
-    "Gain on Sale of Intangibles",
-    "Gain on Sale of Investments",
-    "Gain on Settlement of Lawsuit",
-]);
+// Point value comes from each term's cell color in the spreadsheet, so
+// recoloring a cell is all it takes to change what a term is worth
+const POINTS_BY_FILL = {
+    "92D050": 100, // green
+    "FFFF00": 200, // yellow
+    "FFC000": 300, // orange
+};
+const DEFAULT_POINTS = 100;
 
-const POINTS_300 = new Set([
-    "Foreign Exchange Losses",
-    "Foreign Exchange Gains",
-    "Natural Resources",
-    "Accumulated Other Comprehenseive Income",
-    "Advances to Officers, Directors, and Employees",
-    "Marketable Securities",
-    "Investments-Equity Method",
-    "Tax Refund Receivable",
-    "Purchases",
-    "Research and Development Expense",
-    "Research and Development Costs",
-    "Trading Securities",
-    "Certificates of Deposit",
-    "Organizational Costs",
-    "Investments-Available-for-Sale Securities",
-    "Loss from Impairment",
-    "Transportation-In",
-    "Deferred Tax Assets",
-    "Investments-Trading Securities",
-    "Discount on Bonds Payable",
-    "Discount on Notes Payable",
-    "Investment in Subsidiary",
-    "Treasury Bills",
-    "Unrealized Loss on Available for Sale Securities",
-    "Unrealized Gain on Available for Sale Securities",
-    "Unrealized Gain on Trading Securities",
-    "Allowance to Adjust Available-for-Sale Securities to Market",
-    "Allowance to Adjust Trading Securities to Market",
-    "Capital Lease Liability",
-    "Deferred Income Tax Liability",
-    "Grant Revenue",
-    "Grant Receipts",
-    "Investment lncome - Equity Method",
-    "Premium on Bonds Payable",
-    "Premium on Notes Payable",
-    "Provision for Lawsuit",
-    "Purchase Allowances",
-    "Purchases Discounts",
-    "Revenue Received in Advance",
-    "Royalties Payable",
-    "Royalty Income",
-    "Cash Over and Short",
-]);
+// Which worksheets each game draws from, by course. "mix" is the share of
+// draws per column; without one, columns are drawn in proportion to how
+// many terms they hold. Tutorial sheets already have the answer in each
+// term ("Cash - Assets"), so the ball doesn't add it again.
+const TERM_SOURCES = {
+    default: {
+        game1: { sheet: "Normal Balance - All" },
+        game2: { sheet: "All" },
+    },
+    "ACCT 2110": {
+        game1: {
+            sheet: "Normal Balance-2110",
+            tutorialSheet: "Normal 2110 - Tutorial",
+            mix: { [DEBIT]: 0.64, [CREDIT]: 0.36 },
+        },
+        game2: {
+            sheet: "5 Elements - 2110",
+            tutorialSheet: "5 Elements 2110-Tutorial",
+            mix: {
+                [ASSETS]: 0.30,
+                [LIABILITIES]: 0.20,
+                [STOCKHOLDERS_EQUITY]: 0.05,
+                [REVENUES]: 0.10,
+                [EXPENSES]: 0.35,
+            },
+        },
+    },
+};
 
-const assignPoints = (name) => {
-    if (POINTS_300.has(name)) return 300;
-    if (POINTS_200.has(name)) return 200;
-    return 100; // default
+// { "Assets": [{ name, points }, ...], ... } keyed by the sheet's header row
+const readTermColumns = (sheet) => {
+    const columns = {};
+    if (!sheet?.["!ref"]) return columns;
+
+    const range = XLSX.utils.decode_range(sheet["!ref"]);
+    for (let c = range.s.c; c <= range.e.c; c++) {
+        const header = sheet[XLSX.utils.encode_cell({ r: range.s.r, c })]?.v;
+        if (!header) continue;
+
+        const terms = [];
+        for (let r = range.s.r + 1; r <= range.e.r; r++) {
+            const cell = sheet[XLSX.utils.encode_cell({ r, c })];
+            const name = cell?.v != null ? String(cell.v).trim() : "";
+            if (!name) continue;
+            const fill = String(cell.s?.fgColor?.rgb ?? "").slice(-6).toUpperCase();
+            terms.push({ name, points: POINTS_BY_FILL[fill] ?? DEFAULT_POINTS });
+        }
+        columns[String(header).trim()] = terms;
+    }
+    return columns;
 };
 
 const config = {
@@ -225,17 +130,11 @@ this.totalAttempts = 0;
 this.streak = 0; // STREAK COUNTER
         this.cameras.main.fadeIn(1000, 0, 0, 0);
 
-        if (!this.normalBalance || !this.allSheet) {
+        // parse the workbook once; sheets are read lazily in termSource()
+        if (!this.workbook) {
             const binary = this.cache.binary.get("excelData");
-            const workbook = XLSX.read(binary, { type: "array" });
-            this.normalBalance = XLSX.utils
-                .sheet_to_json(workbook.Sheets["Normal Balance - All"] ?? {}, {
-                    header: 1,
-                })
-                .slice(1);
-            this.allSheet = XLSX.utils
-                .sheet_to_json(workbook.Sheets["All"] ?? {}, { header: 1 })
-                .slice(1);
+            this.workbook = XLSX.read(binary, { type: "array", cellStyles: true });
+            this.termColumnsBySheet = {};
         }
 
         const NUM_BALLS = Math.ceil(
@@ -323,88 +222,9 @@ this.skipInstructions = data.skipInstructions ?? false;
     addBall() {
         if (this.balls.getLength() >= NUM_BALLS_AT_TIME) return;
 
-        let elem;
-
-        if (this.game_key === "game1") {
-            this.recentNames = this.recentNames ?? new Set();
-
-const debitCount = this.normalBalance.filter(row => row?.[0]).length;
-const creditCount = this.normalBalance.filter(row => row?.[1]).length;
-const totalCount = debitCount + creditCount;
-
-const type = Math.random() * totalCount < debitCount ? DEBIT : CREDIT;            const arr =
-                type === DEBIT
-                    ? this.normalBalance.map((row) => row[0]).filter(Boolean)
-                    : this.normalBalance.map((row) => row[1]).filter(Boolean);
-
-            let name;
-            let attempts = 0;
-            do {
-                name = arr[Math.floor(Math.random() * arr.length)];
-                attempts++;
-            } while (this.recentNames.has(name) && attempts < 10);
-
-            this.recentNames.add(name);
-            if (this.recentNames.size > 20) {
-                this.recentNames.clear(); // forget older ones occasionally
-            }
-
-            elem = { name, type, points: assignPoints(name) };
-        } else if (this.game_key === "game2") {
-            const types = [
-    ASSETS,
-    LIABILITIES,
-    EXPENSES,
-    REVENUES,
-    STOCKHOLDERS_EQUITY,
-];
-
-// Count the accounts in each worksheet column
-const categoryCounts = types.map((_, index) =>
-    this.allSheet.filter(row => row?.[index]).length
-);
-
-// Calculate the total number of accounts
-const totalAccounts = categoryCounts.reduce(
-    (sum, count) => sum + count, 0
-);
-
-// Randomly select a category based on its percentage
-let random = Math.random() * totalAccounts;
-let typeIndex = 0;
-
-for (let i = 0; i < categoryCounts.length; i++) {
-    random -= categoryCounts[i];
-
-    if (random < 0) {
-        typeIndex = i;
-        break;
-    }
-}
-
-const type = types[typeIndex];
-
-            const colIndex = typeIndex;
-            const col = this.allSheet
-                .map((row) => row?.[colIndex])
-                .filter(Boolean);
-
-            this.recentNames = this.recentNames ?? new Set();
-
-            let name;
-            let attempts = 0;
-            do {
-                name = col[Math.floor(Math.random() * col.length)];
-                attempts++;
-            } while (this.recentNames.has(name) && attempts < 10);
-
-            this.recentNames.add(name);
-            if (this.recentNames.size > 20) {
-                this.recentNames.clear();
-            }
-
-            elem = { name, type, points: assignPoints(name) };
-        }
+        const source = this.termSource();
+        const elem = this.drawTerm(source);
+        if (!elem) return;
 
         const starting_conveyor_belt =
             this.starting_conveyor_belts[
@@ -417,7 +237,7 @@ const type = types[typeIndex];
             starting_conveyor_belt.y,
             elem.name,
             elem.type,
-            this.isTutorial
+            this.isTutorial && !source.answerInName
         );
 
         ball.points = elem.points;
@@ -561,94 +381,52 @@ this.scene.get("HudScene").update_correct_answers(
         this.streakText.setScale(1);
     }
 
-    getRandomNBElements(total) {
-        const credits = this.normalBalance
-            .map((row) => row?.[1])
-            .filter(Boolean);
-        const debits = this.normalBalance
-            .map((row) => row?.[0])
-            .filter(Boolean);
+    // columns to draw from for this game, course and mode
+    termSource() {
+        const courses = this.registry.get("courses") ?? [];
+        const course = Object.keys(TERM_SOURCES).find((c) => courses.includes(c)) ?? "default";
+        const { sheet, tutorialSheet, mix } = TERM_SOURCES[course][this.game_key];
+        const sheetName = this.isTutorial && tutorialSheet ? tutorialSheet : sheet;
 
-        const [creditNum, debitNum] = this.generateRandomNumbers(
-            total,
-            2,
-            false,
-            0.4
-        );
+        this.termColumnsBySheet[sheetName] ??= readTermColumns(this.workbook.Sheets[sheetName]);
+        const columns = this.termColumnsBySheet[sheetName];
 
-        const creditSamples = this.sample(credits, creditNum).map((name) => ({
-            name,
-            type: "Credits",
-            points: assignPoints(name),
-        }));
-
-        const debitSamples = this.sample(debits, debitNum).map((name) => ({
-            name,
-            type: "Debits",
-            points: assignPoints(name),
-        }));
-
-        return this.shuffle([...creditSamples, ...debitSamples]);
+        const types = this.config.basket_types.filter((type) => columns[type]?.length);
+        const weights = types.map((type) => mix?.[type] ?? columns[type].length);
+        return { columns, types, weights, answerInName: sheetName === tutorialSheet };
     }
 
-    getRandomAllElements(total) {
-        const typeNames = [
-            ASSETS,
-            LIABILITIES,
-            EXPENSES,
-            REVENUES,
-            STOCKHOLDERS_EQUITY,
-        ];
+    // pick a column by weight, then a term from it, avoiding recent repeats
+    drawTerm({ columns, types, weights }) {
+        if (!types.length) return null;
 
-        const colCount = this.allSheet[0]?.length ?? 0;
-        const typeNums = this.generateRandomNumbers(total, colCount, true);
+        let random = Math.random() * weights.reduce((sum, w) => sum + w, 0);
+        let typeIndex = types.length - 1;
+        for (let i = 0; i < types.length; i++) {
+            random -= weights[i];
+            if (random < 0) {
+                typeIndex = i;
+                break;
+            }
+        }
+        const type = types[typeIndex];
+        const terms = columns[type];
 
-        return this.shuffle(
-            Array.from({ length: colCount }).flatMap((_, i) => {
-                const col = this.allSheet
-                    .map((row) => row?.[i])
-                    .filter(Boolean);
-                return this.sample(col, typeNums[i]).map((name) => ({
-                    name,
-                    type: typeNames[i] ?? `type${i}`,
-                    points: assignPoints(name),
-                }));
-            })
-        );
-    }
+        this.recentNames = this.recentNames ?? new Set();
 
-    sample(arr, count) {
-        return arr
-            .slice()
-            .sort(() => Math.random() - 0.5)
-            .slice(0, count);
-    }
-    shuffle(arr) {
-        return arr.slice().sort(() => Math.random() - 0.5);
-    }
-    generateRandomNumbers(sum, count, equal = true, ratio = 0.4) {
-        if (equal) {
-            return Array(count).fill(Math.ceil(sum / count));
+        let term;
+        let attempts = 0;
+        do {
+            term = terms[Math.floor(Math.random() * terms.length)];
+            attempts++;
+        } while (this.recentNames.has(term.name) && attempts < 10);
+
+        this.recentNames.add(term.name);
+        if (this.recentNames.size > 20) {
+            this.recentNames.clear(); // forget older ones occasionally
         }
 
-        if (count === 2) {
-            const min = Math.floor(sum * ratio);
-            const max = sum - min;
-            const first = Math.floor(Math.random() * (max - min + 1)) + min;
-            const second = sum - first;
-            return [first, second];
-        }
-        const points = Array.from({ length: count - 1 }, () =>
-            Math.floor(Math.random() * (sum - count + 1))
-        ).sort((a, b) => a - b);
-
-        points.unshift(0);
-        points.push(sum);
-
-        return Array.from(
-            { length: count },
-            (_, i) => points[i + 1] - points[i]
-        );
+        return { name: term.name, type, points: term.points };
     }
 
     create() {

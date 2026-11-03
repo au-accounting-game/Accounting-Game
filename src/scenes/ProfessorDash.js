@@ -86,7 +86,7 @@ export default class ProfessorDash extends Scene {
             this.input.off('wheel'); 
         }
 
-        const GAME_NAMES = { "game1": "Db. vs. Cr.", "game2": "Elements", "game3-1": "Balance", "game3-2": "Effects", "game3-3": "Errors" };
+        const GAME_NAMES = { "game1": "Db. vs. Cr.", "game2": "Elements", "game3-1": "Balance", "game3-2": "Effects + NI", "game3-3": "Errors", "game3-4": "Effects" };
         this.statsContainer = this.add.container(this.scale.width / 2, 200);
         this.downloadBtn.setVisible(true);
 
