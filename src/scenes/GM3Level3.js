@@ -460,7 +460,7 @@ export default class GM3Level3 extends BaseGM3Scene {
         card.add(g);
 
         const message =
-            "What is the effect on the financial statement elements?\nClick on up and down arrows or element boxes to select Overstated, Understated, or No Effect.";
+            "What is the effect on the financial statement elements (assets, liabilities, shareholders equity, revenues, and expenses)?\nClick on up and down arrows or element boxes to select Overstated, Understated, or No Effect.";
         const title = this.add
             .text(0, -40, message, {
                 fontSize: "34px",
@@ -471,6 +471,8 @@ export default class GM3Level3 extends BaseGM3Scene {
                 wordWrap: { width: panelW - 48, useAdvanced: true },
             })
             .setOrigin(0.5);
+        // shrink long instructions so they stay above the Start button
+        for (let size = 34; title.height > 150 && size > 20; size--) title.setFontSize(size);
         card.add(title);
 
         const btnW = 240,
@@ -601,7 +603,7 @@ this.recordAnswer(allMatch);
             this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
         this.input.enabled = false;
-        this.time.delayedCall(1400, () => {
+        this.time.delayedCall(2000, () => {
             this.currentIndex++;
             this._showCurrent(true);
             this.input.enabled = true;
@@ -616,7 +618,7 @@ this.recordAnswer(allMatch);
         this.tweens.add({
             targets: overlay,
             alpha: maxAlpha,
-            duration: 700,
+            duration: 1000, // in and back out: 2s of feedback
             yoyo: true,
             ease: "Quad.easeOut",
             onComplete: () => overlay.destroy(),

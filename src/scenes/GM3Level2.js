@@ -347,7 +347,9 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     g.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 18);
     card.add(g);
 
-    const message = "What is the effect on the financial statement elements?\nClick on up and down arrows or element boxes to indicate change.";
+    const message = this.withNetIncome
+      ? "What is the effect on the financial statement elements (Assets, Liabilities, Stockholders Equity, Revenues, and Expenses)?\nRevenues minus Expenses equals Net Income.\nClick on the up and down arrows or element boxes to indicate change."
+      : "What is the effect on the Balance Sheet Elements (Assets, Liabilities, and Stockholders Equity)?\nClick on the up and down arrows or element boxes to indicate change.";
     const title = this.add.text(0, -40, message, {
       fontSize: "34px",
       color: "#7f1a02",
@@ -356,6 +358,8 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
       lineSpacing: 6,
       wordWrap: { width: panelW - 48, useAdvanced: true },
     }).setOrigin(0.5);
+    // shrink long instructions so they stay above the Start button
+    for (let size = 34; title.height > 150 && size > 20; size--) title.setFontSize(size);
     card.add(title);
 
     // Start button
@@ -452,7 +456,7 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     if (nextBtn) this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
     this.input.enabled = false;
-    this.time.delayedCall(1400, () => {
+    this.time.delayedCall(2000, () => {
       this.currentIndex++;
       this._showCurrent(true);
       this.input.enabled = true;
@@ -465,7 +469,7 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     this.tweens.add({
       targets: overlay,
       alpha: maxAlpha,
-      duration: 700,
+      duration: 1000, // in and back out: 2s of feedback
       yoyo: true,
       ease: "Quad.easeOut",
       onComplete: () => overlay.destroy(),
