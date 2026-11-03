@@ -197,10 +197,10 @@ export default class GM3Level1 extends BaseGM3Scene {
 
 
     // --- NEW UI LIST ---
-    this._uiNodes = [
-      this.qText, this.timerText, this.scoreText, 
-      this.inputBox, this.inputText, this.feedbackText, this.cursor
-    ];
+   this._uiNodes = [
+    this.qText, this.timerText, this.scoreText, this.questionCounterText,
+    this.inputBox, this.inputText, this.feedbackText, this.cursor
+];
     
     this._setGameplayUIVisible(false);
 
@@ -247,7 +247,8 @@ export default class GM3Level1 extends BaseGM3Scene {
     this.cursor.setVisible(false);
 
     const item = this.questions[this.currentIndex];
-    
+
+      this.recordAnswer(this.currentInput === item.correctAnswer);
     if (this.currentInput === item.correctAnswer) {
       this.onScored(100);
       this._updateScoreUI();
