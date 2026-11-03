@@ -319,7 +319,7 @@ this.gameMode = data.type;
 this.speedMultiplier = data.speedMultiplier || 1;
 this.isTutorial = data.isTutorial ?? false;
 this.skipInstructions = data.skipInstructions ?? false;
-        
+    }
     addBall() {
         if (this.balls.getLength() >= NUM_BALLS_AT_TIME) return;
 
