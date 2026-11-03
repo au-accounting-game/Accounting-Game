@@ -106,6 +106,19 @@ recordAnswer(isCorrect) {
     );
 }
     
+  // pop a result message in soft green / red: quick overshoot, short hold,
+  // then fade - fits inside the 1.2s before the next question
+  _popResult(text, correct, message) {
+    text.setText(message)
+      .setColor(correct ? "#a5d6a7" : "#ef9a9a")
+      .setStroke(correct ? "#2e7d32" : "#8b0000", 5)
+      .setAlpha(1)
+      .setScale(0.4);
+    this.tweens.killTweensOf(text);
+    this.tweens.add({ targets: text, scale: 1, duration: 260, ease: "Back.easeOut" });
+    this.tweens.add({ targets: text, alpha: 0, duration: 250, delay: 850 });
+  }
+
   onTimeUp() {
     this.endLevel(false);
   }

@@ -245,10 +245,10 @@ export default class GM3Level1 extends BaseGM3Scene {
       this.onScored(100);
       this._updateScoreUI();
       this.inputBox.setStrokeStyle(4, 0x2e7d32); // Turn box border green
-      this.feedbackText.setText("Correct! +100").setColor("#2e7d32").setAlpha(1);
+      this._popResult(this.feedbackText, true, "Correct! +100");
     } else {
       this.inputBox.setStrokeStyle(4, 0x8b0000); // Turn box border red
-      this.feedbackText.setText(`Incorrect!\nCorrect answer: ${item.correctAnswer}`).setColor("#ec1b1b").setAlpha(1);
+      this._popResult(this.feedbackText, false, `Incorrect!\nCorrect answer: ${item.correctAnswer}`);
     }
 
     // Delay so they can read the feedback, then automatically advance to next question

@@ -539,14 +539,9 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     if (this.timerText)
       this.timerText.setText(`Time: ${this.timeLeft | 0}s`);
   }
-  // "Correct! +200" or "Incorrect", floating up over the 1.2s of feedback
+  // "Correct! +200" or "Incorrect"
   _showResult(correct, amount = 200) {
-    const t = this.plusText; if (!t) return;
-    t.setText(correct ? `Correct! +${amount}` : "Incorrect");
-    t.setPosition(this.plusTextAnchor.x, this.plusTextAnchor.y);
-    t.setAlpha(1).setScale(1);
-    this.tweens.killTweensOf(t);
-    this.tweens.add({ targets: t, y: this.plusTextAnchor.y - 30, alpha: 0, scale: 1.15, duration: 1150, ease: "Quad.easeIn" });
+    if (this.plusText) this._popResult(this.plusText, correct, correct ? `Correct! +${amount}` : "Incorrect");
   }
 
   _failAndBack(msg) {
