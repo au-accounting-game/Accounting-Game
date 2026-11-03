@@ -192,6 +192,9 @@ export class MainMenuScene extends Scene {
         [...sections.toUpperCase().matchAll(/ACCT(\d{4})/g)].map(m => `ACCT ${m[1]}`)
       )];
 
+      // games pick their course's worksheets from this (MainScene.termSource)
+      this.registry.set("courses", classes);
+
       if (classes.includes("ACCT 2110")) show2110Menu();
       else showDefaultMenu();
 
