@@ -124,9 +124,9 @@ export class SettingsScene extends Scene {
             color: "#dcc89f",
         }).setOrigin(0.5);
 
-        // 3. Class picker - only when nobody is logged in (no sections to go by);
-        // the main menu and games use the picked class (MainMenuScene)
-        if (this.registry.get("loggedIn") !== true) {
+        // 3. Class picker - only for players with no ACCT sections to go by
+        // (logged out, admins, TAs); the menu and games use the picked class
+        if (this.registry.get("canPickClass") !== false) {
             const classY = panelY + 60;
             this.add.text(panelX - 180, classY, "Class", {
                 fontFamily: '"Jersey 10", sans-serif',

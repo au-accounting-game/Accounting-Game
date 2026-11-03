@@ -183,9 +183,7 @@ export class MainMenuScene extends Scene {
       // scene may have been left while the fetch was in flight
       if (!this.sys.isActive()) return;
 
-      // Settings only offers the class picker when nobody is logged in
       const loggedIn = user?.userid != null;
-      this.registry.set("loggedIn", loggedIn);
 
       // the menu unlocks only once the server confirms a login session;
       // otherwise ask the player to sign in (not locally - SSO is server-only)
@@ -201,7 +199,11 @@ export class MainMenuScene extends Scene {
       let classes = [...new Set(
         [...sections.toUpperCase().matchAll(/ACCT(\d{4})/g)].map(m => `ACCT ${m[1]}`)
       )];
-      if (!loggedIn) {
+      // no ACCT sections to go by (logged out, admins, TAs, test accounts):
+      // use the class picked in Settings, which only offers the picker then
+      const hasSections = classes.length > 0;
+      this.registry.set("canPickClass", !hasSections);
+      if (!hasSections) {
         const picked = localStorage.getItem("class_view");
         classes = picked ? [picked] : [];
       }
