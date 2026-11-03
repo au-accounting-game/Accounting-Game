@@ -445,10 +445,11 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     if (allMatch) {
       this.onScored(200);
       this._updateScoreUI();
-      this._showPlusAmount(200);
+      this._showResult(true, 200);
       this._flashScreen(0x2e7d32, 0.35);
       if (nextBtn) nextBtn.setFillStyle(0x2e7d32);
     } else {
+      this._showResult(false);
       this._flashScreen(0x8b0000, 0.35);
       if (nextBtn) nextBtn.setFillStyle(0x8b0000);
     }
@@ -456,7 +457,7 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     if (nextBtn) this.time.delayedCall(350, () => nextBtn.setFillStyle(0xdcc89f));
 
     this.input.enabled = false;
-    this.time.delayedCall(2000, () => {
+    this.time.delayedCall(1200, () => {
       this.currentIndex++;
       this._showCurrent(true);
       this.input.enabled = true;
@@ -469,7 +470,7 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     this.tweens.add({
       targets: overlay,
       alpha: maxAlpha,
-      duration: 1000, // in and back out: 2s of feedback
+      duration: 600, // in and back out: 1.2s of feedback
       yoyo: true,
       ease: "Quad.easeOut",
       onComplete: () => overlay.destroy(),
@@ -538,13 +539,14 @@ this.selections[key] = next; valueText.setText(displayValues[next]);
     if (this.timerText)
       this.timerText.setText(`Time: ${this.timeLeft | 0}s`);
   }
-  _showPlusAmount(amount = 200) {
+  // "Correct! +200" or "Incorrect", floating up over the 1.2s of feedback
+  _showResult(correct, amount = 200) {
     const t = this.plusText; if (!t) return;
-    t.setText(`+${amount}`);
+    t.setText(correct ? `Correct! +${amount}` : "Incorrect");
     t.setPosition(this.plusTextAnchor.x, this.plusTextAnchor.y);
     t.setAlpha(1).setScale(1);
     this.tweens.killTweensOf(t);
-    this.tweens.add({ targets: t, y: this.plusTextAnchor.y - 30, alpha: 0, scale: 1.15, duration: 650, ease: "Quad.easeOut" });
+    this.tweens.add({ targets: t, y: this.plusTextAnchor.y - 30, alpha: 0, scale: 1.15, duration: 1150, ease: "Quad.easeIn" });
   }
 
   _failAndBack(msg) {
