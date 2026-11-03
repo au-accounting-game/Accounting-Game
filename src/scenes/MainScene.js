@@ -326,8 +326,11 @@ this.streak = 0; // STREAK COUNTER
         if (this.game_key === "game1") {
             this.recentNames = this.recentNames ?? new Set();
 
-            const type = Math.random() < 0.5 ? DEBIT : CREDIT;
-            const arr =
+const debitCount = this.normalBalance.filter(row => row?.[0]).length;
+const creditCount = this.normalBalance.filter(row => row?.[1]).length;
+const totalCount = debitCount + creditCount;
+
+const type = Math.random() * totalCount < debitCount ? DEBIT : CREDIT;            const arr =
                 type === DEBIT
                     ? this.normalBalance.map((row) => row[0]).filter(Boolean)
                     : this.normalBalance.map((row) => row[1]).filter(Boolean);
@@ -347,14 +350,37 @@ this.streak = 0; // STREAK COUNTER
             elem = { name, type, points: assignPoints(name) };
         } else if (this.game_key === "game2") {
             const types = [
-                ASSETS,
-                LIABILITIES,
-                EXPENSES,
-                REVENUES,
-                STOCKHOLDERS_EQUITY,
-            ];
-            const typeIndex = Math.floor(Math.random() * types.length);
-            const type = types[typeIndex];
+    ASSETS,
+    LIABILITIES,
+    EXPENSES,
+    REVENUES,
+    STOCKHOLDERS_EQUITY,
+];
+
+// Count the accounts in each worksheet column
+const categoryCounts = types.map((_, index) =>
+    this.allSheet.filter(row => row?.[index]).length
+);
+
+// Calculate the total number of accounts
+const totalAccounts = categoryCounts.reduce(
+    (sum, count) => sum + count, 0
+);
+
+// Randomly select a category based on its percentage
+let random = Math.random() * totalAccounts;
+let typeIndex = 0;
+
+for (let i = 0; i < categoryCounts.length; i++) {
+    random -= categoryCounts[i];
+
+    if (random < 0) {
+        typeIndex = i;
+        break;
+    }
+}
+
+const type = types[typeIndex];
 
             const colIndex = typeIndex;
             const col = this.allSheet
