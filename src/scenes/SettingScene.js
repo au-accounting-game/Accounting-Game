@@ -102,6 +102,12 @@ export class SettingsScene extends Scene {
                      "Exit",
                      () => this.scene.start("MainMenuScene"));
 
+        // My Stats Button (Top Right)
+        createButton(panelX + panelWidth / 2 - 72.5,
+                     panelY - panelHeight / 2 + 35,
+                     "My Stats",
+                     () => this.scene.start("StatsScene"));
+
         // 2. Volume Section (Upper Mid)
         const volumeY = panelY - 60;
         this.add.text(panelX - 180, volumeY, "Volume", {

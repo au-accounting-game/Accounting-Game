@@ -632,6 +632,38 @@ def get_section_report(section_id: str):
     finally:
         pool.putconn(conn)
 
+# student view: the logged-in player's own stats (Settings -> My Stats)
+@app.get("/stats/me")
+def get_my_stats(request: Request):
+    username = request.session.get('userid')
+    if not username:
+        # no session (logged out, or local dev without SSO)
+        return {"logged_in": False, "games": []}
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB not initialized")
+
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            # scores are stored under the lowercased username (see /submit)
+            cur.execute(SQL_PLAYER_GAME_STATS, (username.lower(),))
+            rows = cur.fetchall()
+        return {
+            "logged_in": True,
+            "games": [
+                {
+                    "game": r[0],
+                    "rounds": r[1],
+                    "top": r[2],
+                    "avg": float(r[3]) if r[3] is not None else 0.0,
+                    "seconds": r[4] or 0,
+                    "last_played": r[5].isoformat() if r[5] else None,
+                } for r in rows
+            ],
+        }
+    finally:
+        pool.putconn(conn)
+
 #get all the unique sections for the dropdown filter 
 @app.get("/stats/sections/list")
 async def get_sections_list():
