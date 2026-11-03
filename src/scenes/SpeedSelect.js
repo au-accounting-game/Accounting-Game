@@ -104,13 +104,11 @@ export class SpeedSelect extends Phaser.Scene {
       if ((this.game?.sfxVolume ?? this.sound.volume) > 0)
         this.sound.play("selection");
 
-     this.scene.start("MainScene", {
+   this.scene.start("MainScene", {
     type: this.gameMode,
     skipInstructions: false
 });
-    gameType: this.gameMode
 });
-    });
 
     const titleText = this.add.text(width / 2, -50, "Select a speed!", {
       fontSize: "56px",
