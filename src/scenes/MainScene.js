@@ -220,8 +220,9 @@ export class MainScene extends Scene {
         this.game.sfxVolume = parseFloat(localStorage.getItem("volume"));
         if (isNaN(this.game.sfxVolume)) this.game.sfxVolume = 1.0;
         this.ballCount = 0;
-        this.correctAnswers = 0;
-	this.streak = 0; // STREAK COUNTER
+this.correctAnswers = 0;
+this.totalAttempts = 0;
+this.streak = 0; // STREAK COUNTER
         this.cameras.main.fadeIn(1000, 0, 0, 0);
 
         if (!this.normalBalance || !this.allSheet) {
@@ -451,11 +452,15 @@ export class MainScene extends Scene {
                 ball.destroyBall();
                 this.answer_stats.get(basket.type).correct += 1;
                 
-// Increase the correct-answer counter
+// Count correct answer and total attempts
 this.correctAnswers += 1;
+this.totalAttempts += 1;
 
 // Update the counter displayed on screen
-this.scene.get("HudScene").update_correct_answers(this.correctAnswers);
+this.scene.get("HudScene").update_correct_answers(
+    this.correctAnswers,
+    this.totalAttempts
+);
                 if (this.game.sfxVolume > 0) {
                     this.sound.play("correct", { volume: this.game.sfxVolume });
                 }
@@ -466,6 +471,14 @@ this.scene.get("HudScene").update_correct_answers(this.correctAnswers);
                 ball.been_in_wrong_basket = true;
                 ball.goToPit();
                 this.answer_stats.get(basket.type).incorrect += 1;
+                // Count incorrect answer as an attempt
+this.totalAttempts += 1;
+
+// Update the counter
+this.scene.get("HudScene").update_correct_answers(
+    this.correctAnswers,
+    this.totalAttempts
+);
 
 		// streak broken
 		this.streak = 0;
