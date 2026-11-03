@@ -25,6 +25,7 @@ export class ReviewScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    this.scene.bringToTop(); // scene order would otherwise put it under e.g. the leaderboard
 
     // dim whatever is underneath; also swallows clicks meant for it
     this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.55).setInteractive();

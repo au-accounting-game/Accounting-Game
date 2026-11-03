@@ -9,8 +9,8 @@ export class Leaderboard extends Scene {
         this.gameKey = data.gameKey || "game1";
         this.highlightName = data.highlightName || null; 
         this.scoreScope = "section"; // tab state
-        this.playAgainScene = data.playAgainScene || null;
-        this.missed = data.missed ?? []; // from GameOverScene, for the Review button
+        // set when opened on top of GameOverScene: Exit goes back there
+        this.returnTo = data.returnTo || null;
     }
 
     async create() {
@@ -176,38 +176,9 @@ const exitBtn = createButton(
     -panelWidth / 2 + 72.5,
     -panelHeight / 2 + 35,
     "Exit",
-    () => this.scene.start("MainMenuScene")
+    () => this.exit()
 );
 this.leaderboardContainer.add(exitBtn);
-
-// Play Again button directly below Exit
-if (this.playAgainScene) {
-    const playAgainBtn = createButton(
-        -panelWidth / 2 + 72.5,
-        -panelHeight / 2 + 95,
-        "Play Again",
-        () => {
-            this.game.musicManager?.stop();
-            this.sound.stopAll();
-            this.scene.start(this.playAgainScene);
-        }
-    );
-    this.leaderboardContainer.add(playAgainBtn);
-}
-
-// Review button below Play Again, after an Accounting Equation game with misses
-if (this.missed.length) {
-    const reviewBtn = createButton(
-        -panelWidth / 2 + 72.5,
-        -panelHeight / 2 + 155,
-        "Review",
-        () => {
-            this.scene.pause();
-            this.scene.launch("ReviewScene", { missed: this.missed, returnTo: this.scene.key });
-        }
-    );
-    this.leaderboardContainer.add(reviewBtn);
-}
 
         // Dashboard Arrow
 
@@ -337,7 +308,12 @@ if (this.missed.length) {
 
         this.loadLeaderboard(this.gameKey);
         this.leaderboardContainer.setScale(0.95);
-        this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on("down", () => this.scene.start("MainMenuScene"));
+        this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on("down", () => this.exit());
+
+        // leaving some other way (e.g. a dashboard) while Game Over waits underneath
+        this.events.once("shutdown", () => {
+            if (this.returnTo && this.scene.isPaused(this.returnTo)) this.scene.stop(this.returnTo);
+        });
     }
 
     // cloud wrap logic
@@ -387,6 +363,16 @@ if (this.missed.length) {
             tab.draw(key === this.scoreScope ? 0xa8321a : 0x7f1a02);
             tab.setDepth(key === this.scoreScope ? 5 : 4);
         });
+    }
+
+    // back to the Game Over screen it was opened from, otherwise the main menu
+    exit() {
+        if (this.returnTo) {
+            this.scene.resume(this.returnTo); // before stop, so the shutdown check sees it resumed
+            this.scene.stop();
+        } else {
+            this.scene.start("MainMenuScene");
+        }
     }
 
     async loadLeaderboard(mode) {
