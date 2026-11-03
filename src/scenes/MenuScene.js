@@ -169,9 +169,10 @@ export class MenuScene extends Scene {
                         volume: this.game.sfxVolume,
                     });
                 }
-                this.game.events.emit("start-game", {
-		    isTutorial: false
-		});
+               this.scene.start("SpeedSelect", {
+    type: this.gameType,
+    isTutorial: false
+});
             }
         );
 
@@ -189,9 +190,10 @@ export class MenuScene extends Scene {
                         volume: this.game.sfxVolume,
                     });
                 }
-                this.game.events.emit("start-game", {
-			isTutorial: true
-		});
+               this.scene.start("SpeedSelect", {
+    type: this.gameType,
+    isTutorial: true
+});
             
 	    }
         );
