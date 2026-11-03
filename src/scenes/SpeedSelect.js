@@ -104,7 +104,9 @@ export class SpeedSelect extends Phaser.Scene {
       if ((this.game?.sfxVolume ?? this.sound.volume) > 0)
         this.sound.play("selection");
 
-      this.scene.start("MainMenuScene");
+      this.scene.start("MenuScene", {
+    gameType: this.gameMode
+});
     });
 
     const titleText = this.add.text(width / 2, -50, "Select a speed!", {
@@ -159,7 +161,11 @@ export class SpeedSelect extends Phaser.Scene {
     this._escKey = this.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.ESC
     );
-    this._escKey.on("down", () => this.scene.start("MainMenuScene"));
+    this._escKey.on("down", () => {
+    this.scene.start("MenuScene", {
+        gameType: this.gameMode
+    });
+});
   }
 
   // cloud wrap logic
