@@ -106,11 +106,11 @@ recordAnswer(isCorrect) {
     );
 }
     
-  // pop a result message in green / red: bounces in, short hold, then
+  // pop a result message (white for correct, red for incorrect): bounces in, short hold, then
   // fades - fits inside the 1.2s before the next question
   _popResult(text, correct, message) {
     text.setText(message)
-      .setColor(correct ? "#81c784" : "#e57373")
+      .setColor(correct ? "#ffffff" : "#e57373")
       .setStroke(correct ? "#1b5e20" : "#7f0000", 5)
       .setAlpha(1)
       .setScale(0.4);
